@@ -20,9 +20,12 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", () => {
+io.on("connection", (socket) => {
   // eslint-disable-next-line no-console
   console.log("connection succeeded");
+  socket.on("w", (arg1) => {
+    console.log(arg1);
+  });
 });
 
 app.get("/", (request, response) => {

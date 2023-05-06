@@ -1,38 +1,12 @@
-/* eslint-disable no-restricted-syntax */
 import * as THREE from "three";
-import * as math from "mathjs";
-import { SceneRenderer, GameObject, Vector3 } from "./models";
-
-function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
-  const { x, y, z } = rotation;
-  const rotationMatrixX = math.matrix([
-    [1, 0, 0],
-    [0, math.cos(x), -math.sin(x)],
-    [0, math.sin(x), math.cos(x)],
-  ]);
-  const rotationMatrixY = math.matrix([
-    [math.cos(y), 0, math.sin(y)],
-    [0, 1, 0],
-    [-math.sin(y), 0, math.cos(y)],
-  ]);
-  const rotationMatrixZ = math.matrix([
-    [math.cos(z), -math.sin(z), 0],
-    [math.sin(z), math.cos(z), 0],
-    [0, 0, 1],
-  ]);
-  const oldVectorArray = math.matrix([oldVector.x, oldVector.y, oldVector.z]);
-  const newVectorArray = math
-    .chain(rotationMatrixX)
-    .multiply(rotationMatrixY)
-    .multiply(rotationMatrixZ)
-    .multiply(oldVectorArray)
-    .done();
-  return {
-    x: newVectorArray.get([0]) as number,
-    y: newVectorArray.get([1]) as number,
-    z: newVectorArray.get([2]) as number,
-  };
-}
+import {
+  SceneRenderer,
+  GameObject,
+  Vector3,
+  Scene,
+  SceneType,
+  Renderer,
+} from "./models";
 
 class Player implements GameObject {
   id: number;
@@ -54,48 +28,65 @@ class Player implements GameObject {
   }
 }
 
-export class MainScene {
+interface PlayerAction {
+  player: Player;
+
+  isCompleted: boolean;
+
+  tick(delta: number): void;
+}
+
+export class MoveAction implements PlayerAction {
+  player: Player;
+
+  isCompleted = false;
+
+  vector: Vector3;
+
+  constructor(player: Player, vector: Vector3) {
+    this.player = player;
+    this.vector = vector;
+  }
+
+  tick(delta: number) {
+    this.player.move(this.vector, delta);
+    this.isCompleted = true;
+  }
+}
+
+export class MainScene extends Scene {
   gameObjects: GameObject[] = [];
 
-  userPlayer: Player;
+  readonly userPlayer: Player;
 
   Players: Player[] = [];
 
-  constructor() {
+  private playerActions: PlayerAction[] = [];
+
+  constructor(onSceneDestroyed: (sceneType: SceneType) => void) {
+    super();
+    this.onSceneDestroyed = onSceneDestroyed;
     this.userPlayer = new Player(1, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
     this.Players.push(this.userPlayer);
   }
 
-  executeUserAction(keyStates: Map<string, boolean>, delta: number) {
-    if (keyStates.get("ArrowUp")) {
-      this.userPlayer.move(
-        rotateVector3({ x: 0.001, y: 0, z: 0 }, this.userPlayer.rotation),
-        delta
-      );
-    }
-    if (keyStates.get("ArrowDown")) {
-      this.userPlayer.move(
-        rotateVector3({ x: -0.001, y: 0, z: 0 }, this.userPlayer.rotation),
-        delta
-      );
-    }
-    if (keyStates.get("ArrowLeft")) {
-      this.userPlayer.move(
-        rotateVector3({ x: 0, y: -0.001, z: 0 }, this.userPlayer.rotation),
-        delta
-      );
-    }
-    if (keyStates.get("ArrowRight")) {
-      this.userPlayer.move(
-        rotateVector3({ x: 0, y: 0.001, z: 0 }, this.userPlayer.rotation),
-        delta
-      );
+  addPlayerAction(playerAction: PlayerAction) {
+    this.playerActions.push(playerAction);
+  }
+
+  removePlayerAction(playerAction: PlayerAction) {
+    this.playerActions.splice(this.playerActions.indexOf(playerAction), 1);
+  }
+
+  runPlayerAction(delta: number) {
+    for (const playerAction of this.playerActions) {
+      if (playerAction.isCompleted) {
+        this.removePlayerAction(playerAction);
+      } else {
+        playerAction.tick(delta);
+      }
     }
   }
-}
-
-interface Renderer {
-  render(): void;
 }
 
 class PlayerRenderer implements Renderer {
@@ -132,7 +123,7 @@ class PlayerRenderer implements Renderer {
 }
 
 export class MainSceneRenderer extends SceneRenderer {
-  scene: MainScene;
+  protected scene: MainScene;
 
   playerRenderers: Map<Player, PlayerRenderer>;
 
@@ -160,9 +151,5 @@ export class MainSceneRenderer extends SceneRenderer {
     }
     this.camera.position.set(1, 0, 5);
     this.webGLRenderer.render(this.threeScene, this.camera);
-  }
-
-  destroy() {
-    this.webGLRenderer.dispose();
   }
 }

@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef } from "react";
-import Game from "./game";
+import GameManager from "./GameManager";
 
 export default function Emulator() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const gameRef = useRef<Game | null>(null);
+  const gameRef = useRef<GameManager | null>(null);
 
   useEffect(() => {
     const currentCanvas = canvasRef.current;
     if (!currentCanvas) throw new Error();
-    gameRef.current = new Game(currentCanvas);
+    gameRef.current = new GameManager(currentCanvas);
     gameRef.current.run();
     return () => {
       if (!gameRef.current) throw new Error();
@@ -18,20 +18,24 @@ export default function Emulator() {
     };
   }, []);
 
-  const handleKeyAction = useCallback((e: KeyboardEvent) => {
-    const currentGame = gameRef.current;
-    if (!currentGame) throw new Error();
-    currentGame.setKeyStates(e);
+  const handleUserInput = useCallback((e: KeyboardEvent | PointerEvent) => {
+    if (!gameRef.current) throw new Error();
+    gameRef.current.handleUserInput(e);
+    if (e instanceof KeyboardEvent) console.log(e.key);
   }, []);
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyAction);
-    window.addEventListener("keyup", handleKeyAction);
+    const currentCanvas = canvasRef.current;
+    if (!currentCanvas) throw new Error();
+    window.addEventListener("keydown", handleUserInput);
+    window.addEventListener("keyup", handleUserInput);
+    currentCanvas.addEventListener("pointermove", handleUserInput);
     return () => {
-      window.removeEventListener("keydown", handleKeyAction);
-      window.removeEventListener("keyup", handleKeyAction);
+      window.removeEventListener("keydown", handleUserInput);
+      window.removeEventListener("keyup", handleUserInput);
+      currentCanvas.removeEventListener("pointermove", handleUserInput);
     };
-  }, [handleKeyAction]);
+  }, [handleUserInput]);
 
   return (
     <canvas ref={canvasRef} width={400} height={300}>
