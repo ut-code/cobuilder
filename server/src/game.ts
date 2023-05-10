@@ -154,7 +154,7 @@ export default class Game {
         this.addPlayerAction(new RotateAction(actor, { x: 0, y: 0, z: 0.01 }));
       }
       if (inputs.d) {
-        this.addPlayerAction(new RotateAction(actor, { x: 0, y: 0, z: 0.01 }));
+        this.addPlayerAction(new RotateAction(actor, { x: 0, y: 0, z: -0.01 }));
       }
     }
   }
