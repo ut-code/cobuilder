@@ -1,6 +1,8 @@
 import { Socket, io } from "socket.io-client";
 import { Vector3 } from "./scenes/models";
 
+const { WEB_SERVER } = import.meta.env;
+
 export default class NetworkManager {
   socket: Socket;
 
@@ -13,7 +15,7 @@ export default class NetworkManager {
   ) => void;
 
   constructor() {
-    this.socket = io("http://localhost:5000");
+    this.socket = io(WEB_SERVER || "http://localhost:5000");
     this.socket.on(
       "playerStatuses",
       (
