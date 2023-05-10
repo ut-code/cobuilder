@@ -28,7 +28,7 @@ export default class GameManager {
       canvas
     );
     this.inputManager = new InputManager();
-    this.networkManager = new NetworkManager();
+    this.networkManager = new NetworkManager(this.userId);
     this.switchScene("main");
   }
 
@@ -41,9 +41,9 @@ export default class GameManager {
         });
         this.scene = newMainScene;
         this.sceneRenderer = new MainSceneRenderer(newMainScene, this.canvas);
-        this.networkManager.sendCreatePlayer(this.userId);
+        this.networkManager.sendCreatePlayer();
         this.inputManager.onInputs = (inputs: Map<string, boolean>) => {
-          this.networkManager.sendUserKeyboardInputs(this.userId, inputs);
+          this.networkManager.sendUserKeyboardInputs(inputs);
         };
         this.networkManager.onGameData = (
           playerStatuses: { id: number; position: Vector3; rotation: Vector3 }[]

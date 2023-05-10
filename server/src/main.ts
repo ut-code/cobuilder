@@ -24,6 +24,7 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
+  let userId: number;
   // eslint-disable-next-line no-console
   console.log("connection succeeded");
   setInterval(() => {
@@ -42,6 +43,7 @@ io.on("connection", (socket) => {
     );
   });
   socket.on("createPlayer", (playerId: number) => {
+    userId = playerId;
     game.setPlayer(
       new Player(playerId, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 })
     );
@@ -49,6 +51,9 @@ io.on("connection", (socket) => {
   socket.on("userKeyboardInputs", (playerId: number, data: string) => {
     const inputs = JSON.parse(data);
     game.setUserInputs(playerId, inputs);
+  });
+  socket.on("disconnect", () => {
+    game.removePlayer(userId);
   });
 });
 

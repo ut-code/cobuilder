@@ -9,11 +9,12 @@ export default function Emulator() {
   useEffect(() => {
     const currentCanvas = canvasRef.current;
     if (!currentCanvas) throw new Error();
-    gameRef.current = new GameManager(currentCanvas);
+    const gameManager = new GameManager(currentCanvas);
+    gameRef.current = gameManager;
     gameRef.current.run();
     return () => {
       if (!gameRef.current) throw new Error();
-      gameRef.current.destroy();
+      gameManager.destroy();
       gameRef.current = null;
     };
   }, []);

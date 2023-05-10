@@ -4,6 +4,8 @@ import { Vector3 } from "./scenes/models";
 const { VITE_WEB_SERVER } = import.meta.env;
 
 export default class NetworkManager {
+  playerId: number;
+
   socket: Socket;
 
   onGameData?: (
@@ -14,7 +16,8 @@ export default class NetworkManager {
     }[]
   ) => void;
 
-  constructor() {
+  constructor(playerId: number) {
+    this.playerId = playerId;
     this.socket = io(VITE_WEB_SERVER as string);
     this.socket.on(
       "playerStatuses",
@@ -31,13 +34,13 @@ export default class NetworkManager {
     );
   }
 
-  sendCreatePlayer(playerId: number) {
-    this.socket.emit("createPlayer", playerId);
+  sendCreatePlayer() {
+    this.socket.emit("createPlayer", this.playerId);
   }
 
-  sendUserKeyboardInputs(playerId: number, inputs: Map<string, boolean>) {
+  sendUserKeyboardInputs(inputs: Map<string, boolean>) {
     const data = JSON.stringify(Object.fromEntries(inputs));
-    this.socket.emit("userKeyboardInputs", playerId, data);
+    this.socket.emit("userKeyboardInputs", this.playerId, data);
   }
 
   destroy() {
