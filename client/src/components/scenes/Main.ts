@@ -8,7 +8,7 @@ import {
   Renderer,
 } from "./models";
 
-class Player implements GameObject {
+export class Player implements GameObject {
   id: number;
 
   position: Vector3;
@@ -20,70 +20,39 @@ class Player implements GameObject {
     this.position = position;
     this.rotation = rotation;
   }
-
-  move(vector: Vector3, delta: number) {
-    this.position.x += vector.x * delta;
-    this.position.y += vector.y * delta;
-    this.position.z += vector.z * delta;
-  }
-}
-
-interface PlayerAction {
-  player: Player;
-
-  isCompleted: boolean;
-
-  tick(delta: number): void;
-}
-
-export class MoveAction implements PlayerAction {
-  player: Player;
-
-  isCompleted = false;
-
-  vector: Vector3;
-
-  constructor(player: Player, vector: Vector3) {
-    this.player = player;
-    this.vector = vector;
-  }
-
-  tick(delta: number) {
-    this.player.move(this.vector, delta);
-    this.isCompleted = true;
-  }
 }
 
 export class MainScene extends Scene {
   gameObjects: GameObject[] = [];
 
-  readonly userPlayer: Player;
+  userPlayerId: number;
 
-  Players: Player[] = [];
+  players: Player[] = [];
 
-  private playerActions: PlayerAction[] = [];
-
-  constructor(onSceneDestroyed: (sceneType: SceneType) => void) {
+  constructor(
+    userPlayerId: number,
+    onSceneDestroyed: (sceneType: SceneType) => void
+  ) {
     super();
+    this.userPlayerId = userPlayerId;
     this.onSceneDestroyed = onSceneDestroyed;
-    this.userPlayer = new Player(1, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
-    this.Players.push(this.userPlayer);
   }
 
-  addPlayerAction(playerAction: PlayerAction) {
-    this.playerActions.push(playerAction);
-  }
-
-  removePlayerAction(playerAction: PlayerAction) {
-    this.playerActions.splice(this.playerActions.indexOf(playerAction), 1);
-  }
-
-  runPlayerAction(delta: number) {
-    for (const playerAction of this.playerActions) {
-      if (playerAction.isCompleted) {
-        this.removePlayerAction(playerAction);
+  updatePlayers(
+    playerStatuses: { id: number; position: Vector3; rotation: Vector3 }[]
+  ) {
+    for (const playerStatus of playerStatuses) {
+      const { id, position, rotation } = playerStatus;
+      const existingPlayer = this.players.find((player) => player.id === id);
+      if (!existingPlayer) {
+        this.players.push(new Player(id, position, rotation));
       } else {
-        playerAction.tick(delta);
+        if (existingPlayer.position !== position) {
+          existingPlayer.position = position;
+        }
+        if (existingPlayer.rotation !== rotation) {
+          existingPlayer.rotation = rotation;
+        }
       }
     }
   }
@@ -103,18 +72,22 @@ class PlayerRenderer implements Renderer {
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
     this.playerObject = new THREE.Mesh(geometry, material);
     const { x, y, z } = player.position;
+    const { x: rotationX, y: rotationY, z: rotationZ } = player.rotation;
     this.playerObject.position.set(x, y, z);
     this.threeScene.add(this.playerObject);
     const geometrySub = new THREE.BoxGeometry(1, 1, 1);
     const materialSub = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const object = new THREE.Mesh(geometrySub, materialSub);
     object.position.set(x + 10, y + 10, z);
+    object.rotation.set(rotationX, rotationY, rotationZ);
     this.threeScene.add(object);
   }
 
   render() {
     const { x, y, z } = this.player.position;
+    const { x: rotationX, y: rotationY, z: rotationZ } = this.player.rotation;
     this.playerObject.position.set(x, y, z);
+    this.playerObject.rotation.set(rotationX, rotationY, rotationZ);
   }
 
   destroy() {
@@ -134,10 +107,8 @@ export class MainSceneRenderer extends SceneRenderer {
     this.camera.aspect = canvas.width / canvas.height;
     this.camera.near = 0.1;
     this.camera.far = 1000;
-    const { x, y, z } = this.scene.userPlayer.position;
-    this.camera.position.set(x + 5, y, z + 5);
     this.playerRenderers = new Map();
-    for (const player of this.scene.Players) {
+    for (const player of this.scene.players) {
       this.playerRenderers.set(
         player,
         new PlayerRenderer(player, this.threeScene)
@@ -146,10 +117,23 @@ export class MainSceneRenderer extends SceneRenderer {
   }
 
   render() {
-    for (const playerRenderer of this.playerRenderers.values()) {
-      playerRenderer.render();
+    const unusedPlayerRenderers = new Set(this.playerRenderers.values());
+    for (const player of this.scene.players) {
+      const existingRenderer = this.playerRenderers.get(player);
+      if (!existingRenderer) {
+        this.playerRenderers.set(
+          player,
+          new PlayerRenderer(player, this.threeScene)
+        );
+      } else {
+        existingRenderer.render();
+        unusedPlayerRenderers.delete(existingRenderer);
+      }
     }
-    this.camera.position.set(1, 0, 5);
-    this.webGLRenderer.render(this.threeScene, this.camera);
+    for (const renderer of unusedPlayerRenderers) {
+      renderer.destroy();
+    }
+    this.camera.position.set(0, 0, 5);
+    super.render();
   }
 }

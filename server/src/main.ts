@@ -3,12 +3,15 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import * as dotenv from "dotenv";
+import Game, { Player } from "./game";
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const { WEB_ORIGIN } = process.env;
+
+const game = new Game();
 
 app.use(cors({ origin: [WEB_ORIGIN || "http://localhost:8000"] }));
 
@@ -23,8 +26,29 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   // eslint-disable-next-line no-console
   console.log("connection succeeded");
-  socket.on("w", (arg1) => {
-    console.log(arg1);
+  setInterval(() => {
+    game.createPlayerActions();
+    game.runPlayerActions();
+    socket.emit(
+      "playerStatuses",
+      game.players.map((player) => {
+        const { id, position, rotation } = player;
+        return {
+          id,
+          position,
+          rotation,
+        };
+      })
+    );
+  });
+  socket.on("createPlayer", (playerId: number) => {
+    game.setPlayer(
+      new Player(playerId, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 })
+    );
+  });
+  socket.on("userKeyboardInputs", (playerId: number, data: string) => {
+    const inputs = JSON.parse(data);
+    game.setUserInputs(playerId, inputs);
   });
 });
 
@@ -32,7 +56,7 @@ app.get("/", (request, response) => {
   response.send("connection");
 });
 
-server.listen(8002, () => {
+server.listen(5000, () => {
   // eslint-disable-next-line no-console
   console.log("listening");
 });

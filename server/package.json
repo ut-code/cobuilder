@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev -r dotenv/config --inspect=8001 src/main.ts",
     "type-check": "tsc --noEmit",
-    "build": "babel src --extensions '.ts' --out-dir dist"
+    "build": "cd src && tsc"
   },
   "author": "",
   "license": "ISC",
@@ -15,11 +15,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "socket.io": "^4.6.1",
-    "@babel/cli": "^7.21.0",
-    "@babel/core": "^7.21.4",
-    "@babel/preset-env": "^7.21.4",
-    "@babel/preset-typescript": "^7.21.4"
+    "mathjs": "^11.8.0",
+    "socket.io": "^4.6.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",

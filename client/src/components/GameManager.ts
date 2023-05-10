@@ -1,38 +1,57 @@
-import { Scene, SceneRenderer, SceneType } from "./scenes/models";
+import { Scene, SceneRenderer, SceneType, Vector3 } from "./scenes/models";
 import { MainSceneRenderer, MainScene } from "./scenes/Main";
 import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
 import InputManager from "./InputManger";
+import NetworkManager from "./NetworkManger";
 
 export default class GameManager {
+  userId: number;
+
+  canvas: HTMLCanvasElement;
+
   private scene: Scene;
 
   private sceneRenderer: SceneRenderer;
 
   private inputManager: InputManager;
 
-  canvas: HTMLCanvasElement;
+  private networkManager: NetworkManager;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.scene = new MainScene((sceneType: SceneType) => {
+    this.userId = Math.random();
+    this.canvas = canvas;
+    this.scene = new LoginScene((sceneType: SceneType) => {
       this.switchScene(sceneType);
     });
-    this.canvas = canvas;
-    this.sceneRenderer = new MainSceneRenderer(this.scene as MainScene, canvas);
-    this.inputManager = new InputManager(this.scene);
+    this.sceneRenderer = new LoginSceneRenderer(
+      this.scene as LoginScene,
+      canvas
+    );
+    this.inputManager = new InputManager();
+    this.networkManager = new NetworkManager();
+    this.switchScene("main");
   }
 
   switchScene(sceneType: SceneType) {
     this.sceneRenderer.destroy();
     switch (sceneType) {
-      case "main":
-        this.scene = new MainScene((type: SceneType) => {
+      case "main": {
+        const newMainScene = new MainScene(this.userId, (type: SceneType) => {
           this.switchScene(type);
         });
-        this.sceneRenderer = new MainSceneRenderer(
-          this.scene as MainScene,
-          this.canvas
-        );
+        this.scene = newMainScene;
+        this.sceneRenderer = new MainSceneRenderer(newMainScene, this.canvas);
+        this.networkManager.sendCreatePlayer(this.userId);
+        this.inputManager.onInputs = (inputs: Map<string, boolean>) => {
+          this.networkManager.sendUserKeyboardInputs(this.userId, inputs);
+        };
+        this.networkManager.onGameData = (
+          playerStatuses: { id: number; position: Vector3; rotation: Vector3 }[]
+        ) => {
+          newMainScene.updatePlayers(playerStatuses);
+        };
         break;
+      }
       case "login":
         this.scene = new LoginScene((type: SceneType) => {
           this.switchScene(type);
@@ -48,14 +67,7 @@ export default class GameManager {
   }
 
   run() {
-    let currentTime = Date.now();
     const callBack = () => {
-      const previousTime = currentTime;
-      currentTime = Date.now();
-      this.inputManager.processInput();
-      if (this.scene instanceof MainScene) {
-        this.scene.runPlayerAction(currentTime - previousTime);
-      }
       this.sceneRenderer.render();
       requestAnimationFrame(callBack);
     };
@@ -63,16 +75,20 @@ export default class GameManager {
   }
 
   handleUserInput(e: KeyboardEvent | PointerEvent) {
-    if (e instanceof KeyboardEvent) this.inputManager.setKeyStates(e);
-    else
-      this.inputManager.setPointerCoordinate(
-        e,
-        this.canvas.width,
-        this.canvas.height
-      );
+    if (this.scene instanceof MainScene) {
+      if (e instanceof KeyboardEvent)
+        this.inputManager?.processKeyboardInputs(e);
+      else
+        this.inputManager?.processPointerInputs(
+          e,
+          this.canvas.width,
+          this.canvas.height
+        );
+    }
   }
 
   destroy() {
     this.sceneRenderer.destroy();
+    this.networkManager.destroy();
   }
 }

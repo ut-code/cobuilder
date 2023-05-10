@@ -21,7 +21,6 @@ export default function Emulator() {
   const handleUserInput = useCallback((e: KeyboardEvent | PointerEvent) => {
     if (!gameRef.current) throw new Error();
     gameRef.current.handleUserInput(e);
-    if (e instanceof KeyboardEvent) console.log(e.key);
   }, []);
 
   useEffect(() => {
@@ -38,7 +37,7 @@ export default function Emulator() {
   }, [handleUserInput]);
 
   return (
-    <canvas ref={canvasRef} width={400} height={300}>
+    <canvas ref={canvasRef} width={800} height={450}>
       WebGL描画用キャンバス
     </canvas>
   );

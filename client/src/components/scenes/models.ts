@@ -4,14 +4,6 @@ export type SceneType = "login" | "main";
 
 export abstract class Scene {
   onSceneDestroyed?(sceneType: SceneType): void;
-
-  executeUserAction?(
-    delta: number,
-    data: {
-      keyStates?: Map<string, boolean>;
-      pointerCoordinates?: { x: number; y: number };
-    }
-  ): void;
 }
 
 export abstract class SceneRenderer {
@@ -37,7 +29,7 @@ export abstract class SceneRenderer {
 }
 
 export interface GameObject {
-  position: { x: number; y: number; z: number };
+  position: Vector3;
 
   rotation: Vector3;
 }
