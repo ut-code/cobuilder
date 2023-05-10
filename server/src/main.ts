@@ -13,13 +13,13 @@ const { WEB_ORIGIN } = process.env;
 
 const game = new Game();
 
-app.use(cors({ origin: [WEB_ORIGIN || "http://localhost:8000"] }));
+app.use(cors({ origin: [WEB_ORIGIN as string] }));
 
 app.use(express.json());
 
 const io = new Server(server, {
   cors: {
-    origin: [WEB_ORIGIN || "http://localhost:8000"],
+    origin: [WEB_ORIGIN as string],
   },
 });
 
