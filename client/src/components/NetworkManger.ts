@@ -3,21 +3,24 @@ import { Vector3 } from "./scenes/models";
 
 const { VITE_WEB_SERVER } = import.meta.env;
 
+type PlayerStatusesHandler = (
+  playerStatuses: {
+    id: number;
+    position: Vector3;
+    rotation: Vector3;
+  }[]
+) => void;
+
 export default class NetworkManager {
   playerId: number;
 
   socket: Socket;
 
-  onGameData?: (
-    playerStatuses: {
-      id: number;
-      position: Vector3;
-      rotation: Vector3;
-    }[]
-  ) => void;
+  onGameData?: PlayerStatusesHandler;
 
-  constructor(playerId: number) {
+  constructor(playerId: number, onGameData?: PlayerStatusesHandler) {
     this.playerId = playerId;
+    this.onGameData = onGameData;
     this.socket = io(VITE_WEB_SERVER as string);
     this.socket.on(
       "playerStatuses",

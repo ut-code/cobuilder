@@ -1,4 +1,4 @@
-import { Scene, SceneRenderer, SceneType, Vector3 } from "./scenes/models";
+import { Renderer, Scene, SceneType, Vector3 } from "./scenes/models";
 import { MainSceneRenderer, MainScene } from "./scenes/Main";
 import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
 import InputManager from "./InputManger";
@@ -11,7 +11,7 @@ export default class GameManager {
 
   private scene: Scene;
 
-  private sceneRenderer: SceneRenderer;
+  private sceneRenderer: Renderer;
 
   private inputManager: InputManager;
 
@@ -34,22 +34,35 @@ export default class GameManager {
 
   switchScene(sceneType: SceneType) {
     this.sceneRenderer.destroy();
+    this.networkManager.destroy();
     switch (sceneType) {
       case "main": {
         const newMainScene = new MainScene(this.userId, (type: SceneType) => {
           this.switchScene(type);
         });
+        const newMainSceneRenderer = new MainSceneRenderer(
+          newMainScene,
+          this.canvas
+        );
         this.scene = newMainScene;
-        this.sceneRenderer = new MainSceneRenderer(newMainScene, this.canvas);
+        this.sceneRenderer = newMainSceneRenderer;
+        this.networkManager = new NetworkManager(
+          this.userId,
+          (
+            playerStatuses: {
+              id: number;
+              position: Vector3;
+              rotation: Vector3;
+            }[]
+          ) => {
+            newMainScene.updatePlayers(playerStatuses);
+          }
+        );
         this.networkManager.sendCreatePlayer();
         this.inputManager.onInputs = (inputs: Map<string, boolean>) => {
           this.networkManager.sendUserKeyboardInputs(inputs);
         };
-        this.networkManager.onGameData = (
-          playerStatuses: { id: number; position: Vector3; rotation: Vector3 }[]
-        ) => {
-          newMainScene.updatePlayers(playerStatuses);
-        };
+
         break;
       }
       case "login":

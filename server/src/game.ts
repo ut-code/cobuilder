@@ -138,7 +138,7 @@ export default class Game {
         this.addPlayerAction(
           new MoveAction(
             actor,
-            rotateVector3({ x: 0, y: 0.01, z: 0 }, actor.rotation)
+            rotateVector3({ x: 0, y: 0.007, z: 0 }, actor.rotation)
           )
         );
       }
@@ -146,15 +146,17 @@ export default class Game {
         this.addPlayerAction(
           new MoveAction(
             actor,
-            rotateVector3({ x: 0, y: -0.01, z: 0 }, actor.rotation)
+            rotateVector3({ x: 0, y: -0.007, z: 0 }, actor.rotation)
           )
         );
       }
       if (inputs.a) {
-        this.addPlayerAction(new RotateAction(actor, { x: 0, y: 0, z: 0.01 }));
+        this.addPlayerAction(new RotateAction(actor, { x: 0, y: 0, z: 0.006 }));
       }
       if (inputs.d) {
-        this.addPlayerAction(new RotateAction(actor, { x: 0, y: 0, z: -0.01 }));
+        this.addPlayerAction(
+          new RotateAction(actor, { x: 0, y: 0, z: -0.006 })
+        );
       }
     }
   }
