@@ -107,7 +107,7 @@ class PlayerRenderer implements Renderer {
     const { x: rotationX, y: rotationY, z: rotationZ } = player.rotation;
     this.playerObject.position.set(x, y, z);
     this.playerObject.rotation.set(rotationX, rotationY, rotationZ);
-    this.playerObject.scale.set(10, 10, 10);
+    this.playerObject.scale.set(10, 10, 5);
     this.threeScene.add(this.playerObject);
   }
 
@@ -133,7 +133,7 @@ class CameraRenderer implements Renderer {
   constructor(aspect: number, threeScene: THREE.Scene, userPlayer: Player) {
     this.userPlayer = userPlayer;
     this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-    this.camera.lookAt(new THREE.Vector3(0, 1, 0));
+    this.camera.lookAt(0, 1, 0);
     this.threeScene = threeScene;
   }
 
@@ -143,12 +143,24 @@ class CameraRenderer implements Renderer {
 
   render(): void {
     const { x, y, z } = this.userPlayer.position;
+    const {
+      x: rotationX,
+      y: rotationY,
+      z: rotationZ,
+    } = this.userPlayer.rotation;
     const vector = rotateVector3(
-      { x: 0, y: -20, z: 5 },
+      { x: 0, y: -30, z: 15 },
       this.userPlayer.rotation
     );
     const { x: deltaX, y: deltaY, z: deltaZ } = vector;
     this.camera.position.set(x + deltaX, y + deltaY, z + deltaZ);
+    this.camera.rotation.y = -math.atan2(-vector.x, -vector.y);
+    const { x: X, y: Y, z: Z } = this.camera.position;
+    const { x: rotX, y: rotY, z: rotZ } = this.camera.rotation;
+    console.log(`プレイヤー座標 ${x},${y},${z}`);
+    console.log(`プレイヤー回転 ${rotationX}, ${rotationY}, ${rotationZ}`);
+    console.log(`カメラ座標 ${X},${Y},${Z}`);
+    console.log(`カメラ回転 ${rotX},${rotY},${rotZ}`);
   }
 
   destroy(): void {

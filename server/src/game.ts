@@ -105,6 +105,10 @@ class RotateAction implements PlayerAction {
   }
 }
 
+const sensitivity = 3;
+
+const speed = 40;
+
 export default class Game {
   players: Player[] = [];
 
@@ -138,7 +142,7 @@ export default class Game {
         this.addPlayerAction(
           new MoveAction(
             actor,
-            rotateVector3({ x: 0, y: 0.007, z: 0 }, actor.rotation)
+            rotateVector3({ x: 0, y: 0.001 * speed, z: 0 }, actor.rotation)
           )
         );
       }
@@ -146,16 +150,18 @@ export default class Game {
         this.addPlayerAction(
           new MoveAction(
             actor,
-            rotateVector3({ x: 0, y: -0.007, z: 0 }, actor.rotation)
+            rotateVector3({ x: 0, y: -0.001 * speed, z: 0 }, actor.rotation)
           )
         );
       }
       if (inputs.a) {
-        this.addPlayerAction(new RotateAction(actor, { x: 0, y: 0, z: 0.006 }));
+        this.addPlayerAction(
+          new RotateAction(actor, { x: 0, y: 0, z: 0.001 * sensitivity })
+        );
       }
       if (inputs.d) {
         this.addPlayerAction(
-          new RotateAction(actor, { x: 0, y: 0, z: -0.006 })
+          new RotateAction(actor, { x: 0, y: 0, z: -0.001 * sensitivity })
         );
       }
     }
