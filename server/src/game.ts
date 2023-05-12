@@ -19,10 +19,37 @@ export class Player implements GameObject {
 
   rotation: Vector3;
 
+  coolDownTime = 0;
+
   constructor(id: number, position: Vector3, rotation: Vector3) {
     this.id = id;
     this.position = position;
     this.rotation = rotation;
+  }
+
+  resetCoolDownTime() {
+    this.coolDownTime = 1;
+  }
+}
+
+class Bullet implements GameObject {
+  owner: Player;
+
+  position: Vector3;
+
+  rotation: Vector3;
+
+  constructor(owner: Player, position: Vector3, rotation: Vector3) {
+    this.owner = owner;
+    this.position = position;
+    this.rotation = rotation;
+  }
+
+  move(vector: Vector3) {
+    const { x, y, z } = vector;
+    this.position.x += x;
+    this.position.y += y;
+    this.position.z += z;
   }
 }
 
@@ -58,7 +85,7 @@ function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
 }
 
 interface PlayerAction {
-  player: Player;
+  actor: Player;
 
   isCompleted: boolean;
 
@@ -66,41 +93,64 @@ interface PlayerAction {
 }
 
 class MoveAction implements PlayerAction {
-  player: Player;
+  actor: Player;
 
   isCompleted = false;
 
   vector: Vector3;
 
   constructor(player: Player, vector: Vector3) {
-    this.player = player;
+    this.actor = player;
     this.vector = vector;
   }
 
   run() {
-    this.player.position.x += this.vector.x;
-    this.player.position.y += this.vector.y;
-    this.player.position.z += this.vector.z;
+    this.actor.position.x += this.vector.x;
+    this.actor.position.y += this.vector.y;
+    this.actor.position.z += this.vector.z;
     this.isCompleted = true;
   }
 }
 
 class RotateAction implements PlayerAction {
-  player: Player;
+  actor: Player;
 
   isCompleted = false;
 
   rotation: Vector3;
 
   constructor(player: Player, rotation: Vector3) {
-    this.player = player;
+    this.actor = player;
     this.rotation = rotation;
   }
 
   run() {
-    this.player.rotation.x += this.rotation.x;
-    this.player.rotation.y += this.rotation.y;
-    this.player.rotation.z += this.rotation.z;
+    this.actor.rotation.x += this.rotation.x;
+    this.actor.rotation.y += this.rotation.y;
+    this.actor.rotation.z += this.rotation.z;
+    this.isCompleted = true;
+  }
+}
+
+class ShootAction implements PlayerAction {
+  actor: Player;
+
+  isCompleted = false;
+
+  bullets: Bullet[];
+
+  constructor(player: Player, bullets: Bullet[]) {
+    this.actor = player;
+    this.bullets = bullets;
+  }
+
+  run(): void {
+    if (this.actor.coolDownTime === 0) {
+      const { x, y, z } = this.actor.position;
+      const bullet = new Bullet(this.actor, { x, y, z }, this.actor.rotation);
+      this.bullets.push(bullet);
+      this.actor.resetCoolDownTime();
+    }
     this.isCompleted = true;
   }
 }
@@ -111,6 +161,8 @@ const speed = 40;
 
 export default class Game {
   players: Player[] = [];
+
+  bullets: Bullet[] = [];
 
   playerActions: Set<PlayerAction> = new Set();
 
@@ -163,6 +215,9 @@ export default class Game {
         this.addPlayerAction(
           new RotateAction(actor, { x: 0, y: 0, z: -0.001 * sensitivity })
         );
+      }
+      if (inputs[" "]) {
+        this.addPlayerAction(new ShootAction(actor, this.bullets));
       }
     }
   }

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import * as math from "mathjs";
 import { GameObject, Vector3, Scene, SceneType, Renderer } from "./models";
+import { BulletStatus, PlayerStatus } from "../NetworkManger";
 
 function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   const { x, y, z } = rotation;
@@ -47,12 +48,28 @@ export class Player implements GameObject {
   }
 }
 
+export class Bullet implements GameObject {
+  ownerId: number;
+
+  position: Vector3;
+
+  rotation: Vector3;
+
+  constructor(ownerId: number, position: Vector3, rotation: Vector3) {
+    this.ownerId = ownerId;
+    this.position = position;
+    this.rotation = rotation;
+  }
+}
+
 export class MainScene extends Scene {
   gameObjects: GameObject[] = [];
 
   userPlayerId: number;
 
   players: Player[] = [];
+
+  bullets: Bullet[] = [];
 
   constructor(
     userPlayerId: number,
@@ -70,9 +87,11 @@ export class MainScene extends Scene {
     return this.players.find((player) => player.id === id);
   }
 
-  updatePlayers(
-    playerStatuses: { id: number; position: Vector3; rotation: Vector3 }[]
+  updateGameObjects(
+    playerStatuses: PlayerStatus[],
+    bulletStatuses: BulletStatus[]
   ) {
+    // player の更新
     for (const playerStatus of playerStatuses) {
       const { id, position, rotation } = playerStatus;
       const existingPlayer = this.players.find((player) => player.id === id);
@@ -84,6 +103,24 @@ export class MainScene extends Scene {
         }
         if (existingPlayer.rotation !== rotation) {
           existingPlayer.rotation = rotation;
+        }
+      }
+    }
+
+    // bulletの更新
+    for (const bulletStatus of bulletStatuses) {
+      const { ownerId, position, rotation } = bulletStatus;
+      const existingBullet = this.bullets.find(
+        (bullet) => bullet.ownerId === ownerId
+      );
+      if (!existingBullet) {
+        this.bullets.push(new Bullet(ownerId, position, rotation));
+      } else {
+        if (existingBullet.position !== position) {
+          existingBullet.position = position;
+        }
+        if (existingBullet.rotation !== rotation) {
+          existingBullet.rotation = rotation;
         }
       }
     }
@@ -123,6 +160,37 @@ class PlayerRenderer implements Renderer {
   }
 }
 
+class BulletRenderer implements Renderer {
+  bullet: Bullet;
+
+  bulletObject: THREE.Object3D;
+
+  threeScene: THREE.Scene;
+
+  constructor(bullet: Bullet, threeScene: THREE.Scene) {
+    this.bullet = bullet;
+    this.threeScene = threeScene;
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    this.bulletObject = new THREE.Mesh(geometry, material);
+    const { x, y, z } = bullet.position;
+    const { x: rotationX, y: rotationY, z: rotationZ } = bullet.rotation;
+    this.bulletObject.position.set(x, y, z);
+    this.bulletObject.rotation.set(rotationX, rotationY, rotationZ);
+    this.bulletObject.scale.set(1, 1, 1);
+    this.threeScene.add(this.bulletObject);
+  }
+
+  render(): void {
+    const { x, y, z } = this.bullet.position;
+    this.bulletObject.position.set(x, y, z);
+  }
+
+  destroy(): void {
+    this.threeScene.remove(this.bulletObject);
+  }
+}
+
 class CameraRenderer implements Renderer {
   userPlayer: Player;
 
@@ -143,11 +211,6 @@ class CameraRenderer implements Renderer {
 
   render(): void {
     const { x, y, z } = this.userPlayer.position;
-    const {
-      x: rotationX,
-      y: rotationY,
-      z: rotationZ,
-    } = this.userPlayer.rotation;
     const vector = rotateVector3(
       { x: 0, y: -30, z: 15 },
       this.userPlayer.rotation
@@ -155,12 +218,6 @@ class CameraRenderer implements Renderer {
     const { x: deltaX, y: deltaY, z: deltaZ } = vector;
     this.camera.position.set(x + deltaX, y + deltaY, z + deltaZ);
     this.camera.rotation.y = -math.atan2(-vector.x, -vector.y);
-    const { x: X, y: Y, z: Z } = this.camera.position;
-    const { x: rotX, y: rotY, z: rotZ } = this.camera.rotation;
-    console.log(`プレイヤー座標 ${x},${y},${z}`);
-    console.log(`プレイヤー回転 ${rotationX}, ${rotationY}, ${rotationZ}`);
-    console.log(`カメラ座標 ${X},${Y},${Z}`);
-    console.log(`カメラ回転 ${rotX},${rotY},${rotZ}`);
   }
 
   destroy(): void {
@@ -178,6 +235,8 @@ export class MainSceneRenderer implements Renderer {
   private scene: MainScene;
 
   playerRenderers: Map<Player, PlayerRenderer>;
+
+  bulletRenderers: Map<Bullet, BulletRenderer>;
 
   constructor(scene: MainScene, canvas: HTMLCanvasElement) {
     this.webGLRenderer = new THREE.WebGLRenderer({ canvas });
@@ -202,8 +261,17 @@ export class MainSceneRenderer implements Renderer {
       );
     }
 
+    // BulletRenderers作成
+    this.bulletRenderers = new Map();
+    for (const bullet of this.scene.bullets) {
+      this.bulletRenderers.set(
+        bullet,
+        new BulletRenderer(bullet, this.threeScene)
+      );
+    }
+
     // 地面作成
-    const geometry = new THREE.PlaneGeometry(1000, 1000);
+    const geometry = new THREE.PlaneGeometry(200, 200);
     const material = new THREE.MeshBasicMaterial({
       color: 0xffff00,
       side: THREE.DoubleSide,
@@ -213,6 +281,7 @@ export class MainSceneRenderer implements Renderer {
   }
 
   render() {
+    // Player の描画
     const unusedPlayerRenderers = new Set(this.playerRenderers.values());
     for (const player of this.scene.players) {
       const existingRenderer = this.playerRenderers.get(player);
@@ -228,7 +297,29 @@ export class MainSceneRenderer implements Renderer {
     }
     for (const renderer of unusedPlayerRenderers) {
       renderer.destroy();
+      this.playerRenderers.delete(renderer.player);
     }
+
+    // Bulletの描画
+    const unusedBulletRenderers = new Set(this.bulletRenderers.values());
+    for (const bullet of this.scene.bullets) {
+      const existingRenderer = this.bulletRenderers.get(bullet);
+      if (!existingRenderer) {
+        this.bulletRenderers.set(
+          bullet,
+          new BulletRenderer(bullet, this.threeScene)
+        );
+      } else {
+        existingRenderer.render();
+        unusedBulletRenderers.delete(existingRenderer);
+      }
+    }
+    for (const renderer of unusedBulletRenderers) {
+      renderer.destroy();
+      this.bulletRenderers.delete(renderer.bullet);
+    }
+
+    // cameraの描画
     this.cameraRenderer.render();
     this.webGLRenderer.render(this.threeScene, this.cameraRenderer.getCamera());
   }

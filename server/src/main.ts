@@ -31,7 +31,7 @@ io.on("connection", (socket) => {
     game.createPlayerActions();
     game.runPlayerActions();
     socket.emit(
-      "playerStatuses",
+      "gameData",
       game.players.map((player) => {
         const { id, position, rotation } = player;
         return {
@@ -39,6 +39,10 @@ io.on("connection", (socket) => {
           position,
           rotation,
         };
+      }),
+      game.bullets.map((bullet) => {
+        const { position, rotation } = bullet;
+        return { ownerId: bullet.owner.id, position, rotation };
       })
     );
   });
