@@ -5,6 +5,7 @@ const { VITE_WEB_SERVER } = import.meta.env;
 
 export type PlayerStatus = {
   id: number;
+  HP: number;
   position: Vector3;
   rotation: Vector3;
   isDead: boolean;

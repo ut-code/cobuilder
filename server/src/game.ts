@@ -174,7 +174,15 @@ class ShootAction implements PlayerAction {
   tick(): void {
     if (!this.actor.isCoolingDown) {
       const { x, y, z } = this.actor.position;
-      const bullet = new Bullet(this.actor, { x, y, z }, this.actor.rotation);
+      const vector = rotateVector3(
+        { x: 0, y: PLAYER_DEPTH + 20, z: 0 },
+        this.actor.rotation
+      );
+      const bullet = new Bullet(
+        this.actor,
+        { x: x + vector.x, y: y + vector.y, z: z + vector.z },
+        this.actor.rotation
+      );
       this.bullets.push(bullet);
       this.actor.setCoolDownStartTime(Date.now());
       this.actor.toggleCoolDown();

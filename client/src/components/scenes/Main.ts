@@ -2,6 +2,13 @@ import * as THREE from "three";
 import * as math from "mathjs";
 import { GameObject, Vector3, Scene, SceneType, Renderer } from "./models";
 import { BulletStatus, PlayerStatus } from "../NetworkManger";
+import upSky from "../../../resources/clouds1_up.png";
+import downSky from "../../../resources/clouds1_down.png";
+import eastSky from "../../../resources/clouds1_east.png";
+import westSky from "../../../resources/clouds1_west.png";
+import southSky from "../../../resources/clouds1_south.png";
+import northSky from "../../../resources/clouds1_north.png";
+import dryGround from "../../../resources/ground.png";
 
 function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   const { x, y, z } = rotation;
@@ -36,6 +43,8 @@ function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
 
 export class Player implements GameObject {
   id: number;
+
+  HP = 3;
 
   position: Vector3;
 
@@ -103,7 +112,7 @@ export class MainScene extends Scene {
   ) {
     // player の更新
     for (const playerStatus of playerStatuses) {
-      const { id, position, rotation } = playerStatus;
+      const { id, HP, position, rotation } = playerStatus;
       const existingPlayer = this.players.find((player) => player.id === id);
       if (!existingPlayer) {
         this.players.push(new Player(id, position, rotation));
@@ -113,6 +122,9 @@ export class MainScene extends Scene {
         }
         if (existingPlayer.rotation !== rotation) {
           existingPlayer.rotation = rotation;
+        }
+        if (existingPlayer.HP !== HP) {
+          existingPlayer.HP = HP;
         }
       } else {
         existingPlayer.isDead = true;
@@ -147,7 +159,7 @@ export class MainScene extends Scene {
 class PlayerRenderer implements Renderer {
   player: Player;
 
-  playerObject: THREE.Object3D;
+  playerObject: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>;
 
   threeScene: THREE.Scene;
 
@@ -155,7 +167,7 @@ class PlayerRenderer implements Renderer {
     this.player = player;
     this.threeScene = threeScene;
     const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const material = new THREE.MeshBasicMaterial({ color: 0x87cefa });
     this.playerObject = new THREE.Mesh(geometry, material);
     const { x, y, z } = player.position;
     const { x: rotationX, y: rotationY, z: rotationZ } = player.rotation;
@@ -170,6 +182,11 @@ class PlayerRenderer implements Renderer {
     const { x: rotationX, y: rotationY, z: rotationZ } = this.player.rotation;
     this.playerObject.position.set(x, y, z);
     this.playerObject.rotation.set(rotationX, rotationY, rotationZ);
+    if (this.player.HP === 2) {
+      this.playerObject.material.color.set(0xffff00);
+    } else if (this.player.HP === 1) {
+      this.playerObject.material.color.set(0xff4500);
+    }
   }
 
   destroy() {
@@ -288,13 +305,36 @@ export class MainSceneRenderer implements Renderer {
     }
 
     // 地面作成
-    const geometry = new THREE.PlaneGeometry(200, 200);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xffff00,
-      side: THREE.DoubleSide,
+    const geometry = new THREE.PlaneGeometry(900, 900);
+    const groundTexture = new THREE.TextureLoader().load(dryGround);
+    const plane = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial({ map: groundTexture, side: THREE.FrontSide })
+    );
+
+    // 背景作成
+    const textureArray = [
+      new THREE.TextureLoader().load(eastSky),
+      new THREE.TextureLoader().load(westSky),
+      new THREE.TextureLoader().load(upSky),
+      new THREE.TextureLoader().load(downSky),
+      new THREE.TextureLoader().load(northSky),
+      new THREE.TextureLoader().load(southSky),
+    ];
+    const materialArray = textureArray.map((texture) => {
+      return new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.BackSide,
+      });
     });
-    const plane = new THREE.Mesh(geometry, material);
-    this.threeScene.add(plane);
+    const skyboxGeo = new THREE.BoxGeometry(900, 900, 900);
+    const skybox = new THREE.Mesh(skyboxGeo, materialArray);
+    skybox.rotateX(math.pi / 2);
+
+    const stage = new THREE.Group();
+    stage.add(plane);
+    stage.add(skybox);
+    this.threeScene.add(stage);
   }
 
   render() {
@@ -348,6 +388,10 @@ export class MainSceneRenderer implements Renderer {
     for (const playerRenderer of this.playerRenderers.values()) {
       playerRenderer.destroy();
     }
+    for (const bulletRenderer of this.bulletRenderers.values()) {
+      bulletRenderer.destroy();
+    }
+    this.threeScene.removeFromParent();
     this.webGLRenderer.dispose();
   }
 }
