@@ -51,6 +51,8 @@ export interface Vector3 {
 export class Player implements GameObject {
   id: number;
 
+  HP = 3;
+
   position: Vector3;
 
   rotation: Vector3;
@@ -58,6 +60,8 @@ export class Player implements GameObject {
   isCoolingDown = false;
 
   coolDownStartTime = Date.now();
+
+  isDead = false;
 
   constructor(id: number, position: Vector3, rotation: Vector3) {
     this.id = id;
@@ -71,6 +75,10 @@ export class Player implements GameObject {
 
   setCoolDownStartTime(time: number) {
     this.coolDownStartTime = time;
+  }
+
+  damaged(damage: number) {
+    this.HP -= damage;
   }
 }
 
@@ -196,10 +204,8 @@ export default class Game {
     this.players.push(player);
   }
 
-  removePlayer(id: number) {
-    const removedPlayer = this.players.find((player) => player.id === id);
-    if (!removedPlayer) throw new Error();
-    this.players.splice(this.players.indexOf(removedPlayer), 1);
+  removePlayer(player: Player) {
+    this.players.splice(this.players.indexOf(player), 1);
   }
 
   setUserInputs(playerId: number, inputs: Record<string, boolean>) {
@@ -293,8 +299,17 @@ export default class Game {
             math.sqrt((PLAYER_DEPTH / 2) ** 2 + (PLAYER_HEIGHT / 2) ** 2)
           ) {
             this.removeBullet(bullet);
+            player.damaged(1);
           }
         }
+      }
+    }
+  }
+
+  updatePlayersIsDead() {
+    for (const player of this.players) {
+      if (player.HP <= 0) {
+        player.isDead = true;
       }
     }
   }

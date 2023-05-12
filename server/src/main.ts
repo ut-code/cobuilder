@@ -36,14 +36,16 @@ io.on("connection", (socket) => {
     game.manageCoolDown(currentTime);
     game.moveBullets();
     game.detectCollision();
+    game.updatePlayersIsDead();
     socket.emit(
       "gameData",
       game.players.map((player) => {
-        const { id, position, rotation } = player;
+        const { id, position, rotation, isDead } = player;
         return {
           id,
           position,
           rotation,
+          isDead,
         };
       }),
       game.bullets.map((bullet) => {
@@ -63,7 +65,9 @@ io.on("connection", (socket) => {
     game.setUserInputs(playerId, inputs);
   });
   socket.on("disconnect", () => {
-    game.removePlayer(userId);
+    const userPlayer = game.getPlayer(userId);
+    if (!userPlayer) throw new Error();
+    game.removePlayer(userPlayer);
   });
 });
 

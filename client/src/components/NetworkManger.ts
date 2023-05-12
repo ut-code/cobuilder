@@ -7,6 +7,7 @@ export type PlayerStatus = {
   id: number;
   position: Vector3;
   rotation: Vector3;
+  isDead: boolean;
 };
 
 export type BulletStatus = {

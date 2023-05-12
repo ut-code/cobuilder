@@ -41,6 +41,8 @@ export class Player implements GameObject {
 
   rotation: Vector3;
 
+  isDead = false;
+
   constructor(id: number, position: Vector3, rotation: Vector3) {
     this.id = id;
     this.position = position;
@@ -100,20 +102,20 @@ export class MainScene extends Scene {
     bulletStatuses: BulletStatus[]
   ) {
     // player の更新
-    const deadPlayers = new Set(this.players);
     for (const playerStatus of playerStatuses) {
       const { id, position, rotation } = playerStatus;
       const existingPlayer = this.players.find((player) => player.id === id);
       if (!existingPlayer) {
         this.players.push(new Player(id, position, rotation));
-      } else {
-        deadPlayers.delete(existingPlayer);
+      } else if (!playerStatus.isDead) {
         if (existingPlayer.position !== position) {
           existingPlayer.position = position;
         }
         if (existingPlayer.rotation !== rotation) {
           existingPlayer.rotation = rotation;
         }
+      } else {
+        existingPlayer.isDead = true;
       }
     }
 
@@ -299,15 +301,17 @@ export class MainSceneRenderer implements Renderer {
     // Player の描画
     const unusedPlayerRenderers = new Set(this.playerRenderers.values());
     for (const player of this.scene.players) {
-      const existingRenderer = this.playerRenderers.get(player);
-      if (!existingRenderer) {
-        this.playerRenderers.set(
-          player,
-          new PlayerRenderer(player, this.threeScene)
-        );
-      } else {
-        existingRenderer.render();
-        unusedPlayerRenderers.delete(existingRenderer);
+      if (!player.isDead) {
+        const existingRenderer = this.playerRenderers.get(player);
+        if (!existingRenderer) {
+          this.playerRenderers.set(
+            player,
+            new PlayerRenderer(player, this.threeScene)
+          );
+        } else {
+          existingRenderer.render();
+          unusedPlayerRenderers.delete(existingRenderer);
+        }
       }
     }
     for (const renderer of unusedPlayerRenderers) {
