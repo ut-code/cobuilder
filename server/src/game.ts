@@ -1,5 +1,10 @@
 import * as math from "mathjs";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const PLAYER_WIDTH = 10;
+const PLAYER_DEPTH = 10;
+const PLAYER_HEIGHT = 5;
+
 function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   const { x, y, z } = rotation;
   const rotationMatrixX = math.matrix([
@@ -269,6 +274,28 @@ export default class Game {
   moveBullets() {
     for (const bullet of this.bullets) {
       bullet.move();
+    }
+  }
+
+  removeBullet(existingBullet: Bullet) {
+    this.bullets.splice(this.bullets.indexOf(existingBullet), 1);
+  }
+
+  detectCollision() {
+    for (const player of this.players) {
+      for (const bullet of this.bullets) {
+        if (player !== bullet.owner) {
+          const { x, y } = player.position;
+          const { x: bulletX, y: bulletY } = bullet.position;
+          const distance = math.sqrt((x - bulletX) ** 2 + (y - bulletY) ** 2);
+          if (
+            distance <
+            math.sqrt((PLAYER_DEPTH / 2) ** 2 + (PLAYER_HEIGHT / 2) ** 2)
+          ) {
+            this.removeBullet(bullet);
+          }
+        }
+      }
     }
   }
 }

@@ -35,6 +35,7 @@ io.on("connection", (socket) => {
     game.runPlayerActions(currentTime - previousTime);
     game.manageCoolDown(currentTime);
     game.moveBullets();
+    game.detectCollision();
     socket.emit(
       "gameData",
       game.players.map((player) => {

@@ -87,17 +87,27 @@ export class MainScene extends Scene {
     return this.players.find((player) => player.id === id);
   }
 
+  removePlayer(player: Player) {
+    this.players.splice(this.players.indexOf(player), 1);
+  }
+
+  removeBullet(bullet: Bullet) {
+    this.bullets.splice(this.bullets.indexOf(bullet), 1);
+  }
+
   updateGameObjects(
     playerStatuses: PlayerStatus[],
     bulletStatuses: BulletStatus[]
   ) {
     // player の更新
+    const deadPlayers = new Set(this.players);
     for (const playerStatus of playerStatuses) {
       const { id, position, rotation } = playerStatus;
       const existingPlayer = this.players.find((player) => player.id === id);
       if (!existingPlayer) {
         this.players.push(new Player(id, position, rotation));
       } else {
+        deadPlayers.delete(existingPlayer);
         if (existingPlayer.position !== position) {
           existingPlayer.position = position;
         }
@@ -108,6 +118,7 @@ export class MainScene extends Scene {
     }
 
     // bulletの更新
+    const unusedBullets = new Set(this.bullets);
     for (const bulletStatus of bulletStatuses) {
       const { id: ownerId, position, rotation } = bulletStatus;
       const existingBullet = this.bullets.find(
@@ -116,6 +127,7 @@ export class MainScene extends Scene {
       if (!existingBullet) {
         this.bullets.push(new Bullet(ownerId, position, rotation));
       } else {
+        unusedBullets.delete(existingBullet);
         if (existingBullet.position !== position) {
           existingBullet.position = position;
         }
@@ -123,6 +135,9 @@ export class MainScene extends Scene {
           existingBullet.rotation = rotation;
         }
       }
+    }
+    for (const unusedBullet of unusedBullets) {
+      this.removeBullet(unusedBullet);
     }
   }
 }
