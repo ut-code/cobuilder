@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import {
+  CSS2DObject,
+  CSS2DRenderer,
+} from "three/examples/jsm/renderers/CSS2DRenderer";
 import * as math from "mathjs";
 import { GameObject, Vector3, Scene, SceneType, Renderer } from "./models";
 import { BulletStatus, ObstacleStatus, PlayerStatus } from "../NetworkManger";
@@ -49,6 +53,8 @@ export class Player implements GameObject {
   id: number;
 
   HP = 3;
+
+  score = 0;
 
   position: Vector3;
 
@@ -210,7 +216,7 @@ export class MainScene extends Scene {
   ) {
     // player の更新
     for (const playerStatus of playerStatuses) {
-      const { id, HP, position, rotation } = playerStatus;
+      const { id, HP, score, position, rotation } = playerStatus;
       const existingPlayer = this.players.find((player) => player.id === id);
       if (!existingPlayer) {
         this.players.push(new Player(id, position, rotation));
@@ -223,6 +229,9 @@ export class MainScene extends Scene {
         }
         if (existingPlayer.HP !== HP) {
           existingPlayer.HP = HP;
+        }
+        if (existingPlayer.score !== score) {
+          existingPlayer.score = score;
         }
       } else {
         existingPlayer.isDead = true;
@@ -323,6 +332,42 @@ class BulletRenderer implements Renderer {
   }
 }
 
+class ScoreRenderer implements Renderer {
+  player: Player;
+
+  playerRenderer: PlayerRenderer;
+
+  scoreDiv: HTMLDivElement;
+
+  scoreObject: CSS2DObject;
+
+  threeScene: THREE.Scene;
+
+  constructor(
+    player: Player,
+    playerRenderer: PlayerRenderer,
+    threeScene: THREE.Scene
+  ) {
+    this.player = player;
+    this.playerRenderer = playerRenderer;
+    this.threeScene = threeScene;
+    const scoreDiv = document.createElement("div");
+    this.scoreDiv = scoreDiv;
+    this.scoreObject = new CSS2DObject(scoreDiv);
+    scoreDiv.textContent = `${player.score}`;
+    this.playerRenderer.playerObject.add(this.scoreObject);
+  }
+
+  render(): void {
+    this.scoreDiv.textContent = `${this.player.score}`;
+  }
+
+  destroy(): void {
+    this.playerRenderer.playerObject.remove(this.scoreObject);
+    this.scoreDiv.remove();
+  }
+}
+
 class CameraRenderer implements Renderer {
   userPlayer: Player;
 
@@ -360,6 +405,8 @@ class CameraRenderer implements Renderer {
 export class MainSceneRenderer implements Renderer {
   private webGLRenderer: THREE.WebGLRenderer;
 
+  private css2dRenderer: CSS2DRenderer;
+
   private cameraRenderer;
 
   threeScene: THREE.Scene;
@@ -370,8 +417,15 @@ export class MainSceneRenderer implements Renderer {
 
   bulletRenderers: Map<Bullet, BulletRenderer>;
 
+  scoreRenderer?: ScoreRenderer;
+
   constructor(scene: MainScene, canvas: HTMLCanvasElement) {
     this.webGLRenderer = new THREE.WebGLRenderer({ canvas });
+    this.css2dRenderer = new CSS2DRenderer();
+    this.css2dRenderer.setSize(canvas.width, canvas.height);
+    this.css2dRenderer.domElement.style.position = "absolute";
+    this.css2dRenderer.domElement.style.bottom = "0px";
+    document.body.appendChild(this.css2dRenderer.domElement);
     this.threeScene = new THREE.Scene();
     this.scene = scene;
 
@@ -384,7 +438,7 @@ export class MainSceneRenderer implements Renderer {
       userPlayer
     );
 
-    // PlayerRenderer作成
+    // PlayerRendererとScoreRenderers作成
     this.playerRenderers = new Map();
     for (const player of this.scene.players) {
       this.playerRenderers.set(
@@ -392,6 +446,14 @@ export class MainSceneRenderer implements Renderer {
         new PlayerRenderer(player, this.threeScene)
       );
     }
+
+    const userPlayerRenderer = this.playerRenderers.get(userPlayer);
+
+    this.scoreRenderer = new ScoreRenderer(
+      userPlayer,
+      userPlayerRenderer!,
+      this.threeScene
+    );
 
     // BulletRenderers作成
     this.bulletRenderers = new Map();
@@ -497,8 +559,16 @@ export class MainSceneRenderer implements Renderer {
       this.bulletRenderers.delete(renderer.bullet);
     }
 
+    // スコアの描画
+    if (!this.scoreRenderer?.player.isDead) {
+      this.scoreRenderer?.render();
+    } else {
+      this.scoreRenderer.destroy();
+    }
+
     // cameraの描画
     this.cameraRenderer.render();
+    this.css2dRenderer.render(this.threeScene, this.cameraRenderer.getCamera());
     this.webGLRenderer.render(this.threeScene, this.cameraRenderer.getCamera());
   }
 
@@ -510,6 +580,7 @@ export class MainSceneRenderer implements Renderer {
     for (const bulletRenderer of this.bulletRenderers.values()) {
       bulletRenderer.destroy();
     }
+    this.scoreRenderer?.destroy();
     this.threeScene.removeFromParent();
     this.webGLRenderer.dispose();
   }

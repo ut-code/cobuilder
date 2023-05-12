@@ -59,6 +59,8 @@ export class Player implements GameObject {
 
   HP = 3;
 
+  score = 0;
+
   previousPosition: Vector3;
 
   position: Vector3;
@@ -416,41 +418,44 @@ export default class Game {
 
   detectCollision() {
     for (const player of this.players) {
-      for (const bullet of this.bullets) {
-        if (player !== bullet.owner) {
-          const { x, y } = player.position;
-          const { x: bulletX, y: bulletY } = bullet.position;
-          const distance = math.sqrt((x - bulletX) ** 2 + (y - bulletY) ** 2);
-          if (
-            distance <
-            math.sqrt((PLAYER_DEPTH / 2) ** 2 + (PLAYER_HEIGHT / 2) ** 2)
-          ) {
-            this.removeBullet(bullet);
-            player.damaged(1);
+      if (!player.isDead) {
+        for (const bullet of this.bullets) {
+          if (player !== bullet.owner) {
+            const { x, y } = player.position;
+            const { x: bulletX, y: bulletY } = bullet.position;
+            const distance = math.sqrt((x - bulletX) ** 2 + (y - bulletY) ** 2);
+            if (
+              distance <
+              math.sqrt((PLAYER_DEPTH / 2) ** 2 + (PLAYER_HEIGHT / 2) ** 2)
+            ) {
+              bullet.owner.score += 10;
+              this.removeBullet(bullet);
+              player.damaged(1);
+            }
           }
         }
-      }
-      for (const obstacle of this.obstacles) {
-        const { x, y } = player.position;
-        const { x: obstacleX, y: obstacleY } = obstacle.position;
-        const distance = Number(
-          math.sqrt((x - obstacleX) ** 2 + (y - obstacleY) ** 2)
-        );
-        if (distance < OBSTACLE_BOTTOM_RADIUS) {
-          player.setPosition(player.previousPosition);
+        for (const obstacle of this.obstacles) {
+          const { x, y } = player.position;
+          const { x: obstacleX, y: obstacleY } = obstacle.position;
+          const distance = Number(
+            math.sqrt((x - obstacleX) ** 2 + (y - obstacleY) ** 2)
+          );
+          if (distance < OBSTACLE_BOTTOM_RADIUS) {
+            player.setPosition(player.previousPosition);
+          }
         }
-      }
-      if (player.position.x > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
-        player.position.x = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
-      }
-      if (player.position.x < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
-        player.position.x = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
-      }
-      if (player.position.y > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
-        player.position.y = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
-      }
-      if (player.position.y < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
-        player.position.y = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
+        if (player.position.x > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
+          player.position.x = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
+        }
+        if (player.position.x < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
+          player.position.x = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
+        }
+        if (player.position.y > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
+          player.position.y = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
+        }
+        if (player.position.y < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
+          player.position.y = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
+        }
       }
     }
     for (const bullet of this.bullets) {

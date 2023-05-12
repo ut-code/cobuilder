@@ -40,10 +40,11 @@ io.on("connection", (socket) => {
     socket.emit(
       "gameData",
       game.players.map((player) => {
-        const { id, HP, position, rotation, isDead } = player;
+        const { id, HP, score, position, rotation, isDead } = player;
         return {
           id,
           HP,
+          score,
           position,
           rotation,
           isDead,
