@@ -2,7 +2,11 @@ import { Renderer, Scene, SceneType } from "./scenes/models";
 import { MainSceneRenderer, MainScene } from "./scenes/Main";
 import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
 import InputManager from "./InputManger";
-import NetworkManager, { BulletStatus, PlayerStatus } from "./NetworkManger";
+import NetworkManager, {
+  BulletStatus,
+  ObstacleStatus,
+  PlayerStatus,
+} from "./NetworkManger";
 
 export default class GameManager {
   userId: number;
@@ -48,8 +52,16 @@ export default class GameManager {
         this.sceneRenderer = newMainSceneRenderer;
         this.networkManager = new NetworkManager(
           this.userId,
-          (playerStatuses: PlayerStatus[], bulletStatuses: BulletStatus[]) => {
-            newMainScene.updateGameObjects(playerStatuses, bulletStatuses);
+          (
+            playerStatuses: PlayerStatus[],
+            bulletStatuses: BulletStatus[],
+            obstacleStatuses: ObstacleStatus[]
+          ) => {
+            newMainScene.updateGameObjects(
+              playerStatuses,
+              bulletStatuses,
+              obstacleStatuses
+            );
           }
         );
         this.networkManager.sendCreatePlayer();

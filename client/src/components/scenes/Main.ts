@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as math from "mathjs";
 import { GameObject, Vector3, Scene, SceneType, Renderer } from "./models";
-import { BulletStatus, PlayerStatus } from "../NetworkManger";
+import { BulletStatus, ObstacleStatus, PlayerStatus } from "../NetworkManger";
 import upSky from "../../../resources/clouds1_up.png";
 import downSky from "../../../resources/clouds1_down.png";
 import eastSky from "../../../resources/clouds1_east.png";
@@ -9,8 +9,10 @@ import westSky from "../../../resources/clouds1_west.png";
 import southSky from "../../../resources/clouds1_south.png";
 import northSky from "../../../resources/clouds1_north.png";
 import dryGround from "../../../resources/ground.png";
+import brick from "../../../resources/brick_wall-red.png";
 
 const STAGE_WIDTH = 800;
+const OBSTACLE_HEIGHT = 20;
 
 function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   const { x, y, z } = rotation;
@@ -62,21 +64,21 @@ export class Player implements GameObject {
 }
 
 export class Bullet implements GameObject {
-  ownerId: number;
+  id: number;
 
   position: Vector3;
 
   rotation: Vector3;
 
   constructor(ownerId: number, position: Vector3, rotation: Vector3) {
-    this.ownerId = ownerId;
+    this.id = ownerId;
     this.position = position;
     this.rotation = rotation;
   }
 }
 
 export class MainScene extends Scene {
-  gameObjects: GameObject[] = [];
+  obstacles: GameObject[] = [];
 
   userPlayerId: number;
 
@@ -94,6 +96,98 @@ export class MainScene extends Scene {
     this.players.push(
       new Player(userPlayerId, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 })
     );
+    const obstacle1: GameObject = {
+      id: Math.random(),
+      position: {
+        x: STAGE_WIDTH / 4,
+        y: STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle2: GameObject = {
+      id: Math.random(),
+      position: {
+        x: -STAGE_WIDTH / 4,
+        y: STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle3: GameObject = {
+      id: Math.random(),
+      position: {
+        x: STAGE_WIDTH / 4,
+        y: -STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle4: GameObject = {
+      id: Math.random(),
+      position: {
+        x: -STAGE_WIDTH / 4,
+        y: -STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle5: GameObject = {
+      id: Math.random(),
+      position: {
+        x: 0,
+        y: 0,
+        z: 0,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle6: GameObject = {
+      id: Math.random(),
+      position: {
+        x: STAGE_WIDTH / 4,
+        y: 0,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle7: GameObject = {
+      id: Math.random(),
+      position: {
+        x: -STAGE_WIDTH / 4,
+        y: 0,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle8: GameObject = {
+      id: Math.random(),
+      position: {
+        x: 0,
+        y: STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle9: GameObject = {
+      id: Math.random(),
+      position: {
+        x: 0,
+        y: -STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    this.obstacles.push(
+      obstacle1,
+      obstacle2,
+      obstacle3,
+      obstacle4,
+      obstacle5,
+      obstacle6,
+      obstacle7,
+      obstacle8,
+      obstacle9
+    );
   }
 
   getPlayer(id: number) {
@@ -110,7 +204,9 @@ export class MainScene extends Scene {
 
   updateGameObjects(
     playerStatuses: PlayerStatus[],
-    bulletStatuses: BulletStatus[]
+    bulletStatuses: BulletStatus[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    obstacleStatuses: ObstacleStatus[]
   ) {
     // player の更新
     for (const playerStatus of playerStatuses) {
@@ -138,7 +234,7 @@ export class MainScene extends Scene {
     for (const bulletStatus of bulletStatuses) {
       const { id: ownerId, position, rotation } = bulletStatus;
       const existingBullet = this.bullets.find(
-        (bullet) => bullet.ownerId === ownerId
+        (bullet) => bullet.id === ownerId
       );
       if (!existingBullet) {
         this.bullets.push(new Bullet(ownerId, position, rotation));
@@ -306,6 +402,9 @@ export class MainSceneRenderer implements Renderer {
       );
     }
 
+    // 以下ステージ作成
+    const stage = new THREE.Group();
+
     // 地面作成
     const geometry = new THREE.PlaneGeometry(STAGE_WIDTH, STAGE_WIDTH);
     const groundTexture = new THREE.TextureLoader().load(dryGround);
@@ -313,6 +412,7 @@ export class MainSceneRenderer implements Renderer {
       geometry,
       new THREE.MeshBasicMaterial({ map: groundTexture, side: THREE.FrontSide })
     );
+    stage.add(plane);
 
     // 背景作成
     const textureArray = [
@@ -336,10 +436,23 @@ export class MainSceneRenderer implements Renderer {
     );
     const skybox = new THREE.Mesh(skyboxGeo, materialArray);
     skybox.rotateX(math.pi / 2);
-
-    const stage = new THREE.Group();
-    stage.add(plane);
     stage.add(skybox);
+
+    // 障害物作成
+    for (const obstacle of this.scene.obstacles) {
+      const obstacleGeometry = new THREE.CylinderGeometry(20, 40, 40);
+      const texture = new THREE.TextureLoader().load(brick);
+      const material = new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.FrontSide,
+      });
+      const obstacleObject = new THREE.Mesh(obstacleGeometry, material);
+      const { x, y, z } = obstacle.position;
+      obstacleObject.position.set(x, y, z);
+      obstacleObject.rotateX(math.pi / 2);
+      stage.add(obstacleObject);
+    }
+
     this.threeScene.add(stage);
   }
 

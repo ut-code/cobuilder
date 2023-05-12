@@ -17,9 +17,16 @@ export type BulletStatus = {
   rotation: Vector3;
 };
 
+export type ObstacleStatus = {
+  id: number;
+  position: Vector3;
+  rotation: Vector3;
+};
+
 type StatusesHandler = (
   playerStatuses: PlayerStatus[],
-  bullets: BulletStatus[]
+  bulletStatuses: BulletStatus[],
+  obstacleStatuses: ObstacleStatus[]
 ) => void;
 
 export default class NetworkManager {
@@ -35,9 +42,13 @@ export default class NetworkManager {
     this.socket = io(VITE_WEB_SERVER as string);
     this.socket.on(
       "gameData",
-      (playerStatuses: PlayerStatus[], bulletStatuses: BulletStatus[]) => {
+      (
+        playerStatuses: PlayerStatus[],
+        bulletStatuses: BulletStatus[],
+        obstacleStatuses: ObstacleStatus[]
+      ) => {
         if (!this.onGameData) throw new Error();
-        this.onGameData(playerStatuses, bulletStatuses);
+        this.onGameData(playerStatuses, bulletStatuses, obstacleStatuses);
       }
     );
   }

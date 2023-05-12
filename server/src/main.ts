@@ -52,13 +52,17 @@ io.on("connection", (socket) => {
       game.bullets.map((bullet) => {
         const { id, position, rotation } = bullet;
         return { id, position, rotation };
+      }),
+      game.obstacles.map((obstacle) => {
+        const { id, position, rotation } = obstacle;
+        return { id, position, rotation };
       })
     );
   }, 10);
   socket.on("createPlayer", (playerId: number) => {
     userId = playerId;
     game.setPlayer(
-      new Player(playerId, { x: 0, y: 0, z: 5 }, { x: 0, y: 0, z: 0 })
+      new Player(playerId, game.findEmptySpace(), { x: 0, y: 0, z: 0 })
     );
   });
   socket.on("userKeyboardInputs", (playerId: number, data: string) => {

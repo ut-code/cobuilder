@@ -7,6 +7,8 @@ export abstract class Scene {
 }
 
 export interface GameObject {
+  id: number;
+
   position: Vector3;
 
   rotation: Vector3;

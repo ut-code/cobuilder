@@ -5,6 +5,9 @@ const PLAYER_WIDTH = 10;
 const PLAYER_DEPTH = 10;
 const PLAYER_HEIGHT = 5;
 const STAGE_WIDTH = 800;
+const OBSTACLE_HEIGHT = 20;
+const OBSTACLE_BOTTOM_RADIUS = 40;
+const OBSTACLE_TOP_RADIUS = 20;
 
 function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   const { x, y, z } = rotation;
@@ -38,6 +41,8 @@ function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
 }
 
 interface GameObject {
+  id: number;
+
   position: Vector3;
 
   rotation: Vector3;
@@ -54,6 +59,8 @@ export class Player implements GameObject {
 
   HP = 3;
 
+  previousPosition: Vector3;
+
   position: Vector3;
 
   rotation: Vector3;
@@ -67,6 +74,7 @@ export class Player implements GameObject {
   constructor(id: number, position: Vector3, rotation: Vector3) {
     this.id = id;
     this.position = position;
+    this.previousPosition = { x: position.x, y: position.y, z: position.z };
     this.rotation = rotation;
   }
 
@@ -82,19 +90,16 @@ export class Player implements GameObject {
     this.HP -= damage;
   }
 
-  preventOffBoard() {
-    if (this.position.x > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
-      this.position.x = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
-    }
-    if (this.position.x < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
-      this.position.x = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
-    }
-    if (this.position.y > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
-      this.position.y = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
-    }
-    if (this.position.y < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
-      this.position.y = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
-    }
+  setPosition(vector: Vector3) {
+    this.position.x = vector.x;
+    this.position.y = vector.y;
+    this.position.z = vector.z;
+  }
+
+  setPreviousPosition(vector: Vector3) {
+    this.previousPosition.x = vector.x;
+    this.previousPosition.y = vector.y;
+    this.previousPosition.z = vector.z;
   }
 }
 
@@ -148,6 +153,7 @@ class MoveAction implements PlayerAction {
   }
 
   tick(delta: number) {
+    this.actor.setPreviousPosition(this.actor.position);
     this.actor.position.x += this.vector.x * delta;
     this.actor.position.y += this.vector.y * delta;
     this.actor.position.z += this.vector.z * delta;
@@ -209,9 +215,11 @@ class ShootAction implements PlayerAction {
 
 const sensitivity = 3;
 
-const speed = 40;
+const speed = 80;
 
 export default class Game {
+  obstacles: GameObject[] = [];
+
   players: Player[] = [];
 
   bullets: Bullet[] = [];
@@ -219,6 +227,101 @@ export default class Game {
   playerActions: Set<PlayerAction> = new Set();
 
   userInputs: Map<Player, Record<string, boolean>> = new Map();
+
+  constructor() {
+    const obstacle1: GameObject = {
+      id: Math.random(),
+      position: {
+        x: STAGE_WIDTH / 4,
+        y: STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle2: GameObject = {
+      id: Math.random(),
+      position: {
+        x: -STAGE_WIDTH / 4,
+        y: STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle3: GameObject = {
+      id: Math.random(),
+      position: {
+        x: STAGE_WIDTH / 4,
+        y: -STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle4: GameObject = {
+      id: Math.random(),
+      position: {
+        x: -STAGE_WIDTH / 4,
+        y: -STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle5: GameObject = {
+      id: Math.random(),
+      position: {
+        x: 0,
+        y: 0,
+        z: 0,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle6: GameObject = {
+      id: Math.random(),
+      position: {
+        x: STAGE_WIDTH / 4,
+        y: 0,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle7: GameObject = {
+      id: Math.random(),
+      position: {
+        x: -STAGE_WIDTH / 4,
+        y: 0,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle8: GameObject = {
+      id: Math.random(),
+      position: {
+        x: 0,
+        y: STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    const obstacle9: GameObject = {
+      id: Math.random(),
+      position: {
+        x: 0,
+        y: -STAGE_WIDTH / 4,
+        z: OBSTACLE_HEIGHT / 2,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+    };
+    this.obstacles.push(
+      obstacle1,
+      obstacle2,
+      obstacle3,
+      obstacle4,
+      obstacle5,
+      obstacle6,
+      obstacle7,
+      obstacle8,
+      obstacle9
+    );
+  }
 
   getPlayer(id: number) {
     return this.players.find((player) => player.id === id);
@@ -327,6 +430,16 @@ export default class Game {
           }
         }
       }
+      for (const obstacle of this.obstacles) {
+        const { x, y } = player.position;
+        const { x: obstacleX, y: obstacleY } = obstacle.position;
+        const distance = Number(
+          math.sqrt((x - obstacleX) ** 2 + (y - obstacleY) ** 2)
+        );
+        if (distance < OBSTACLE_BOTTOM_RADIUS) {
+          player.setPosition(player.previousPosition);
+        }
+      }
       if (player.position.x > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
         player.position.x = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
       }
@@ -348,6 +461,18 @@ export default class Game {
         bullet.position.y < -(STAGE_WIDTH / 2)
       ) {
         this.removeBullet(bullet);
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      for (const obstacle of this.obstacles) {
+        const { x, y } = bullet.position;
+        const { x: obstacleX, y: obstacleY } = obstacle.position;
+        const distance = Number(
+          math.sqrt((x - obstacleX) ** 2 + (y - obstacleY) ** 2)
+        );
+        if (distance < (OBSTACLE_BOTTOM_RADIUS + OBSTACLE_TOP_RADIUS) / 2) {
+          this.removeBullet(bullet);
+        }
       }
     }
   }
@@ -358,5 +483,40 @@ export default class Game {
         player.isDead = true;
       }
     }
+  }
+
+  findEmptySpace() {
+    let x = Math.random() * (STAGE_WIDTH - 50);
+    let y = Math.random() * (STAGE_WIDTH - 50);
+    let isSpaceFound = false;
+    while (!isSpaceFound) {
+      isSpaceFound = true;
+      for (const bullet of this.bullets) {
+        const { x: bulletX, y: bulletY } = bullet.position;
+        const distance = math.sqrt((x - bulletX) ** 2 + (y - bulletY) ** 2);
+        if (
+          distance <
+          math.sqrt((PLAYER_DEPTH / 2) ** 2 + (PLAYER_HEIGHT / 2) ** 2)
+        ) {
+          isSpaceFound = false;
+          x = Math.random() * (STAGE_WIDTH - 50);
+          y = Math.random() * (STAGE_WIDTH - 50);
+          break;
+        }
+      }
+      if (!isSpaceFound) break;
+      for (const obstacle of this.obstacles) {
+        const { x: obstacleX, y: obstacleY } = obstacle.position;
+        const distance = Number(
+          math.sqrt((x - obstacleX) ** 2 + (y - obstacleY) ** 2)
+        );
+        if (distance < OBSTACLE_BOTTOM_RADIUS) {
+          isSpaceFound = false;
+          x = Math.random() * (STAGE_WIDTH - 50);
+          y = Math.random() * (STAGE_WIDTH - 50);
+        }
+      }
+    }
+    return { x, y, z: 5 };
   }
 }
