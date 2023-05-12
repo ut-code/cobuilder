@@ -1,58 +1,5 @@
 import * as math from "mathjs";
 
-interface GameObject {
-  position: Vector3;
-
-  rotation: Vector3;
-}
-
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
-
-export class Player implements GameObject {
-  id: number;
-
-  position: Vector3;
-
-  rotation: Vector3;
-
-  coolDownTime = 0;
-
-  constructor(id: number, position: Vector3, rotation: Vector3) {
-    this.id = id;
-    this.position = position;
-    this.rotation = rotation;
-  }
-
-  resetCoolDownTime() {
-    this.coolDownTime = 1;
-  }
-}
-
-class Bullet implements GameObject {
-  owner: Player;
-
-  position: Vector3;
-
-  rotation: Vector3;
-
-  constructor(owner: Player, position: Vector3, rotation: Vector3) {
-    this.owner = owner;
-    this.position = position;
-    this.rotation = rotation;
-  }
-
-  move(vector: Vector3) {
-    const { x, y, z } = vector;
-    this.position.x += x;
-    this.position.y += y;
-    this.position.z += z;
-  }
-}
-
 function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   const { x, y, z } = rotation;
   const rotationMatrixX = math.matrix([
@@ -84,12 +31,79 @@ function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   };
 }
 
+interface GameObject {
+  position: Vector3;
+
+  rotation: Vector3;
+}
+
+export interface Vector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export class Player implements GameObject {
+  id: number;
+
+  position: Vector3;
+
+  rotation: Vector3;
+
+  isCoolingDown = false;
+
+  coolDownStartTime = Date.now();
+
+  constructor(id: number, position: Vector3, rotation: Vector3) {
+    this.id = id;
+    this.position = position;
+    this.rotation = rotation;
+  }
+
+  toggleCoolDown() {
+    this.isCoolingDown = !this.isCoolingDown;
+  }
+
+  setCoolDownStartTime(time: number) {
+    this.coolDownStartTime = time;
+  }
+}
+
+class Bullet implements GameObject {
+  id: number;
+
+  owner: Player;
+
+  position: Vector3;
+
+  rotation: Vector3;
+
+  speed = 1.5;
+
+  constructor(owner: Player, position: Vector3, rotation: Vector3) {
+    this.id = Math.random();
+    this.owner = owner;
+    const { x, y, z } = position;
+    const { x: rotationX, y: rotationY, z: rotationZ } = rotation;
+    this.position = { x, y, z };
+    this.rotation = { x: rotationX, y: rotationY, z: rotationZ };
+  }
+
+  move() {
+    const vector = rotateVector3({ x: 0, y: this.speed, z: 0 }, this.rotation);
+    const { x, y, z } = vector;
+    this.position.x += x;
+    this.position.y += y;
+    this.position.z += z;
+  }
+}
+
 interface PlayerAction {
   actor: Player;
 
   isCompleted: boolean;
 
-  run(): void;
+  tick(delta: number): void;
 }
 
 class MoveAction implements PlayerAction {
@@ -104,10 +118,10 @@ class MoveAction implements PlayerAction {
     this.vector = vector;
   }
 
-  run() {
-    this.actor.position.x += this.vector.x;
-    this.actor.position.y += this.vector.y;
-    this.actor.position.z += this.vector.z;
+  tick(delta: number) {
+    this.actor.position.x += this.vector.x * delta;
+    this.actor.position.y += this.vector.y * delta;
+    this.actor.position.z += this.vector.z * delta;
     this.isCompleted = true;
   }
 }
@@ -124,10 +138,10 @@ class RotateAction implements PlayerAction {
     this.rotation = rotation;
   }
 
-  run() {
-    this.actor.rotation.x += this.rotation.x;
-    this.actor.rotation.y += this.rotation.y;
-    this.actor.rotation.z += this.rotation.z;
+  tick(delta: number) {
+    this.actor.rotation.x += this.rotation.x * delta;
+    this.actor.rotation.y += this.rotation.y * delta;
+    this.actor.rotation.z += this.rotation.z * delta;
     this.isCompleted = true;
   }
 }
@@ -144,12 +158,13 @@ class ShootAction implements PlayerAction {
     this.bullets = bullets;
   }
 
-  run(): void {
-    if (this.actor.coolDownTime === 0) {
+  tick(): void {
+    if (!this.actor.isCoolingDown) {
       const { x, y, z } = this.actor.position;
       const bullet = new Bullet(this.actor, { x, y, z }, this.actor.rotation);
       this.bullets.push(bullet);
-      this.actor.resetCoolDownTime();
+      this.actor.setCoolDownStartTime(Date.now());
+      this.actor.toggleCoolDown();
     }
     this.isCompleted = true;
   }
@@ -230,13 +245,30 @@ export default class Game {
     this.playerActions.delete(playerAction);
   }
 
-  runPlayerActions() {
+  runPlayerActions(delta: number) {
     for (const playerAction of this.playerActions) {
       if (playerAction.isCompleted) {
         this.removePlayerAction(playerAction);
       } else {
-        playerAction.run();
+        playerAction.tick(delta);
       }
+    }
+  }
+
+  manageCoolDown(currentTime: number) {
+    for (const player of this.players) {
+      if (
+        player.isCoolingDown &&
+        currentTime - player.coolDownStartTime > 1000
+      ) {
+        player.toggleCoolDown();
+      }
+    }
+  }
+
+  moveBullets() {
+    for (const bullet of this.bullets) {
+      bullet.move();
     }
   }
 }

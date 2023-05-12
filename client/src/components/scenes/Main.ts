@@ -109,7 +109,7 @@ export class MainScene extends Scene {
 
     // bulletの更新
     for (const bulletStatus of bulletStatuses) {
-      const { ownerId, position, rotation } = bulletStatus;
+      const { id: ownerId, position, rotation } = bulletStatus;
       const existingBullet = this.bullets.find(
         (bullet) => bullet.ownerId === ownerId
       );

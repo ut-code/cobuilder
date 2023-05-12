@@ -27,9 +27,14 @@ io.on("connection", (socket) => {
   let userId: number;
   // eslint-disable-next-line no-console
   console.log("connection succeeded");
+  let currentTime = Date.now();
   setInterval(() => {
+    const previousTime = currentTime;
+    currentTime = Date.now();
     game.createPlayerActions();
-    game.runPlayerActions();
+    game.runPlayerActions(currentTime - previousTime);
+    game.manageCoolDown(currentTime);
+    game.moveBullets();
     socket.emit(
       "gameData",
       game.players.map((player) => {
@@ -41,11 +46,11 @@ io.on("connection", (socket) => {
         };
       }),
       game.bullets.map((bullet) => {
-        const { position, rotation } = bullet;
-        return { ownerId: bullet.owner.id, position, rotation };
+        const { id, position, rotation } = bullet;
+        return { id, position, rotation };
       })
     );
-  });
+  }, 10);
   socket.on("createPlayer", (playerId: number) => {
     userId = playerId;
     game.setPlayer(

@@ -10,7 +10,7 @@ export type PlayerStatus = {
 };
 
 export type BulletStatus = {
-  ownerId: number;
+  id: number;
   position: Vector3;
   rotation: Vector3;
 };
