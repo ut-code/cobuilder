@@ -10,6 +10,8 @@ import southSky from "../../../resources/clouds1_south.png";
 import northSky from "../../../resources/clouds1_north.png";
 import dryGround from "../../../resources/ground.png";
 
+const STAGE_WIDTH = 800;
+
 function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   const { x, y, z } = rotation;
   const rotationMatrixX = math.matrix([
@@ -234,7 +236,7 @@ class CameraRenderer implements Renderer {
 
   constructor(aspect: number, threeScene: THREE.Scene, userPlayer: Player) {
     this.userPlayer = userPlayer;
-    this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1200);
     this.camera.lookAt(0, 1, 0);
     this.threeScene = threeScene;
   }
@@ -305,7 +307,7 @@ export class MainSceneRenderer implements Renderer {
     }
 
     // 地面作成
-    const geometry = new THREE.PlaneGeometry(900, 900);
+    const geometry = new THREE.PlaneGeometry(STAGE_WIDTH, STAGE_WIDTH);
     const groundTexture = new THREE.TextureLoader().load(dryGround);
     const plane = new THREE.Mesh(
       geometry,
@@ -327,7 +329,11 @@ export class MainSceneRenderer implements Renderer {
         side: THREE.BackSide,
       });
     });
-    const skyboxGeo = new THREE.BoxGeometry(900, 900, 900);
+    const skyboxGeo = new THREE.BoxGeometry(
+      STAGE_WIDTH,
+      STAGE_WIDTH,
+      STAGE_WIDTH
+    );
     const skybox = new THREE.Mesh(skyboxGeo, materialArray);
     skybox.rotateX(math.pi / 2);
 

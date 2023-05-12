@@ -4,6 +4,7 @@ import * as math from "mathjs";
 const PLAYER_WIDTH = 10;
 const PLAYER_DEPTH = 10;
 const PLAYER_HEIGHT = 5;
+const STAGE_WIDTH = 800;
 
 function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
   const { x, y, z } = rotation;
@@ -79,6 +80,21 @@ export class Player implements GameObject {
 
   damaged(damage: number) {
     this.HP -= damage;
+  }
+
+  preventOffBoard() {
+    if (this.position.x > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
+      this.position.x = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
+    }
+    if (this.position.x < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
+      this.position.x = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
+    }
+    if (this.position.y > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
+      this.position.y = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
+    }
+    if (this.position.y < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
+      this.position.y = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
+    }
   }
 }
 
@@ -310,6 +326,28 @@ export default class Game {
             player.damaged(1);
           }
         }
+      }
+      if (player.position.x > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
+        player.position.x = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
+      }
+      if (player.position.x < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
+        player.position.x = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
+      }
+      if (player.position.y > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
+        player.position.y = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
+      }
+      if (player.position.y < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
+        player.position.y = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
+      }
+    }
+    for (const bullet of this.bullets) {
+      if (
+        bullet.position.x > STAGE_WIDTH / 2 ||
+        bullet.position.x < -(STAGE_WIDTH / 2) ||
+        bullet.position.y > STAGE_WIDTH / 2 ||
+        bullet.position.y < -(STAGE_WIDTH / 2)
+      ) {
+        this.removeBullet(bullet);
       }
     }
   }
