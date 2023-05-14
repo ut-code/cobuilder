@@ -23,48 +23,46 @@ const io = new Server(server, {
   },
 });
 
-let isMasterPlayerOn = false;
+let currentTime = Date.now();
+setInterval(() => {
+  const previousTime = currentTime;
+  currentTime = Date.now();
+  game.createPlayerActions();
+  game.runPlayerActions(currentTime - previousTime);
+  game.manageCoolDown(currentTime);
+  game.moveBullets();
+  game.detectCollision();
+  game.updatePlayersIsDead();
+}, 10);
 
 io.on("connection", (socket) => {
   let userId: number;
   // eslint-disable-next-line no-console
   console.log("connection succeeded");
-  let currentTime = Date.now();
-  if (!isMasterPlayerOn) {
-    isMasterPlayerOn = true;
-    setInterval(() => {
-      const previousTime = currentTime;
-      currentTime = Date.now();
-      game.createPlayerActions();
-      game.runPlayerActions(currentTime - previousTime);
-      game.manageCoolDown(currentTime);
-      game.moveBullets();
-      game.detectCollision();
-      game.updatePlayersIsDead();
-      socket.emit(
-        "gameData",
-        game.players.map((player) => {
-          const { id, HP, score, position, rotation, isDead } = player;
-          return {
-            id,
-            HP,
-            score,
-            position,
-            rotation,
-            isDead,
-          };
-        }),
-        game.bullets.map((bullet) => {
-          const { id, position, rotation } = bullet;
-          return { id, position, rotation };
-        }),
-        game.obstacles.map((obstacle) => {
-          const { id, position, rotation } = obstacle;
-          return { id, position, rotation };
-        })
-      );
-    }, 10);
-  }
+  setInterval(() => {
+    socket.emit(
+      "gameData",
+      game.players.map((player) => {
+        const { id, HP, score, position, rotation, isDead } = player;
+        return {
+          id,
+          HP,
+          score,
+          position,
+          rotation,
+          isDead,
+        };
+      }),
+      game.bullets.map((bullet) => {
+        const { id, position, rotation } = bullet;
+        return { id, position, rotation };
+      }),
+      game.obstacles.map((obstacle) => {
+        const { id, position, rotation } = obstacle;
+        return { id, position, rotation };
+      })
+    );
+  }, 10);
   socket.on("createPlayer", (playerId: number) => {
     userId = playerId;
     game.setPlayer(
