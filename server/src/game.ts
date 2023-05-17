@@ -491,8 +491,8 @@ export default class Game {
   }
 
   findEmptySpace() {
-    let x = Math.random() * (STAGE_WIDTH / 2);
-    let y = Math.random() * (STAGE_WIDTH / 2);
+    let x = Math.random() * (STAGE_WIDTH / 2 - PLAYER_DEPTH / 2);
+    let y = Math.random() * (STAGE_WIDTH / 2 - PLAYER_DEPTH / 2);
     let isSpaceFound = false;
     while (!isSpaceFound) {
       isSpaceFound = true;
