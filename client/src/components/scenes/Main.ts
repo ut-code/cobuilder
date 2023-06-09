@@ -424,7 +424,7 @@ export class MainSceneRenderer implements Renderer {
     this.css2dRenderer = new CSS2DRenderer();
     this.css2dRenderer.setSize(canvas.width, canvas.height);
     this.css2dRenderer.domElement.style.position = "absolute";
-    this.css2dRenderer.domElement.style.bottom = "0px";
+    this.css2dRenderer.domElement.style.top = "0px";
     document.body.appendChild(this.css2dRenderer.domElement);
     this.threeScene = new THREE.Scene();
     this.scene = scene;
