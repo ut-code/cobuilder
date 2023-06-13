@@ -3,7 +3,8 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import * as dotenv from "dotenv";
-import Game, { Player } from "./game";
+import Game from "./game";
+import { Player } from "./common/model";
 
 dotenv.config();
 
@@ -29,7 +30,6 @@ setInterval(() => {
   currentTime = Date.now();
   game.createPlayerActions();
   game.runPlayerActions(currentTime - previousTime);
-  game.manageCoolDown(currentTime);
   game.moveBullets();
   game.detectCollision();
   game.updatePlayersIsDead();
@@ -37,8 +37,6 @@ setInterval(() => {
 
 io.on("connection", (socket) => {
   let userId: number;
-  // eslint-disable-next-line no-console
-  console.log("connection succeeded");
   setInterval(() => {
     socket.emit(
       "gameData",
