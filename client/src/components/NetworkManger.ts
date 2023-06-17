@@ -1,7 +1,7 @@
 import { Socket, io } from "socket.io-client";
 import { Vector3 } from "./scenes/models";
 
-const { VITE_WEB_SERVER } = import.meta.env;
+const { VITE_SERVER_ORIGIN } = import.meta.env;
 
 export type PlayerStatus = {
   id: number;
@@ -40,7 +40,7 @@ export default class NetworkManager {
   constructor(playerId: number, onGameData?: StatusesHandler) {
     this.playerId = playerId;
     this.onGameData = onGameData;
-    this.socket = io(VITE_WEB_SERVER as string);
+    this.socket = io(VITE_SERVER_ORIGIN as string);
     this.socket.on(
       "gameData",
       (
