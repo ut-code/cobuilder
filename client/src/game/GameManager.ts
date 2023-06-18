@@ -51,7 +51,9 @@ export default class GameManager {
         );
         this.scene = newMainScene;
         this.sceneRenderer = newMainSceneRenderer;
-        this.inputManager = new InputManager();
+        this.inputManager = new InputManager((inputs: Map<string, boolean>) => {
+          this.networkManager.sendUserKeyboardInputs(inputs);
+        });
         this.networkManager = new NetworkManager(
           this.userId,
           (
@@ -67,8 +69,6 @@ export default class GameManager {
           }
         );
         this.networkManager.sendCreatePlayer();
-        this.inputManager = new InputManager();
-
         break;
       }
       case "login":

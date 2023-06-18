@@ -11,6 +11,8 @@ export default class InputManager {
   }
 
   processKeyboardInputs(e: KeyboardEvent) {
+    console.log("aaaa");
+    console.log(this.onInputsProcessed);
     this.keyStates.set(e.key, e.type === "keydown");
     this.onInputsProcessed?.(this.keyStates);
   }
