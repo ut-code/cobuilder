@@ -16,6 +16,6 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "src/components/scenes/models.ts"],
+  "include": ["src", "src/game/commons/models.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

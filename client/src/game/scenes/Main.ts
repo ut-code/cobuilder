@@ -1,10 +1,7 @@
 import * as THREE from "three";
-import {
-  CSS2DObject,
-  CSS2DRenderer,
-} from "three/examples/jsm/renderers/CSS2DRenderer";
 import * as math from "mathjs";
-import { GameObject, Vector3, Scene, SceneType, Renderer } from "./models";
+import { GameObject, Scene, SceneType, Renderer } from "../commons/models";
+import { rotateVector3, Vector3 } from "../utils/vector3";
 import { BulletStatus, ObstacleStatus, PlayerStatus } from "../NetworkManger";
 import upSky from "../../../resources/clouds1_up.png";
 import downSky from "../../../resources/clouds1_down.png";
@@ -16,38 +13,6 @@ import dryGround from "../../../resources/ground.png";
 import brick from "../../../resources/brick_wall-red.png";
 
 const STAGE_WIDTH = 800;
-const OBSTACLE_HEIGHT = 20;
-
-function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
-  const { x, y, z } = rotation;
-  const rotationMatrixX = math.matrix([
-    [1, 0, 0],
-    [0, math.cos(x), -math.sin(x)],
-    [0, math.sin(x), math.cos(x)],
-  ]);
-  const rotationMatrixY = math.matrix([
-    [math.cos(y), 0, math.sin(y)],
-    [0, 1, 0],
-    [-math.sin(y), 0, math.cos(y)],
-  ]);
-  const rotationMatrixZ = math.matrix([
-    [math.cos(z), -math.sin(z), 0],
-    [math.sin(z), math.cos(z), 0],
-    [0, 0, 1],
-  ]);
-  const oldVectorArray = math.matrix([oldVector.x, oldVector.y, oldVector.z]);
-  const newVectorArray = math
-    .chain(rotationMatrixX)
-    .multiply(rotationMatrixY)
-    .multiply(rotationMatrixZ)
-    .multiply(oldVectorArray)
-    .done();
-  return {
-    x: newVectorArray.get([0]) as number,
-    y: newVectorArray.get([1]) as number,
-    z: newVectorArray.get([2]) as number,
-  };
-}
 
 export class Player implements GameObject {
   id: number;
@@ -101,98 +66,6 @@ export class MainScene extends Scene {
     this.onSceneDestroyed = onSceneDestroyed;
     this.players.push(
       new Player(userPlayerId, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 })
-    );
-    const obstacle1: GameObject = {
-      id: Math.random(),
-      position: {
-        x: STAGE_WIDTH / 4,
-        y: STAGE_WIDTH / 4,
-        z: OBSTACLE_HEIGHT / 2,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    const obstacle2: GameObject = {
-      id: Math.random(),
-      position: {
-        x: -STAGE_WIDTH / 4,
-        y: STAGE_WIDTH / 4,
-        z: OBSTACLE_HEIGHT / 2,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    const obstacle3: GameObject = {
-      id: Math.random(),
-      position: {
-        x: STAGE_WIDTH / 4,
-        y: -STAGE_WIDTH / 4,
-        z: OBSTACLE_HEIGHT / 2,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    const obstacle4: GameObject = {
-      id: Math.random(),
-      position: {
-        x: -STAGE_WIDTH / 4,
-        y: -STAGE_WIDTH / 4,
-        z: OBSTACLE_HEIGHT / 2,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    const obstacle5: GameObject = {
-      id: Math.random(),
-      position: {
-        x: 0,
-        y: 0,
-        z: 0,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    const obstacle6: GameObject = {
-      id: Math.random(),
-      position: {
-        x: STAGE_WIDTH / 4,
-        y: 0,
-        z: OBSTACLE_HEIGHT / 2,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    const obstacle7: GameObject = {
-      id: Math.random(),
-      position: {
-        x: -STAGE_WIDTH / 4,
-        y: 0,
-        z: OBSTACLE_HEIGHT / 2,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    const obstacle8: GameObject = {
-      id: Math.random(),
-      position: {
-        x: 0,
-        y: STAGE_WIDTH / 4,
-        z: OBSTACLE_HEIGHT / 2,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    const obstacle9: GameObject = {
-      id: Math.random(),
-      position: {
-        x: 0,
-        y: -STAGE_WIDTH / 4,
-        z: OBSTACLE_HEIGHT / 2,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-    };
-    this.obstacles.push(
-      obstacle1,
-      obstacle2,
-      obstacle3,
-      obstacle4,
-      obstacle5,
-      obstacle6,
-      obstacle7,
-      obstacle8,
-      obstacle9
     );
   }
 
@@ -332,42 +205,6 @@ class BulletRenderer implements Renderer {
   }
 }
 
-class ScoreRenderer implements Renderer {
-  player: Player;
-
-  playerRenderer: PlayerRenderer;
-
-  scoreDiv: HTMLDivElement;
-
-  scoreObject: CSS2DObject;
-
-  threeScene: THREE.Scene;
-
-  constructor(
-    player: Player,
-    playerRenderer: PlayerRenderer,
-    threeScene: THREE.Scene
-  ) {
-    this.player = player;
-    this.playerRenderer = playerRenderer;
-    this.threeScene = threeScene;
-    const scoreDiv = document.createElement("div");
-    this.scoreDiv = scoreDiv;
-    this.scoreObject = new CSS2DObject(scoreDiv);
-    scoreDiv.textContent = `${player.score}`;
-    this.playerRenderer.playerObject.add(this.scoreObject);
-  }
-
-  render(): void {
-    this.scoreDiv.textContent = `${this.player.score}`;
-  }
-
-  destroy(): void {
-    this.playerRenderer.playerObject.remove(this.scoreObject);
-    this.scoreDiv.remove();
-  }
-}
-
 class CameraRenderer implements Renderer {
   userPlayer: Player;
 
@@ -405,8 +242,6 @@ class CameraRenderer implements Renderer {
 export class MainSceneRenderer implements Renderer {
   private webGLRenderer: THREE.WebGLRenderer;
 
-  private css2dRenderer: CSS2DRenderer;
-
   private cameraRenderer;
 
   threeScene: THREE.Scene;
@@ -417,15 +252,8 @@ export class MainSceneRenderer implements Renderer {
 
   bulletRenderers: Map<Bullet, BulletRenderer>;
 
-  scoreRenderer?: ScoreRenderer;
-
   constructor(scene: MainScene, canvas: HTMLCanvasElement) {
     this.webGLRenderer = new THREE.WebGLRenderer({ canvas });
-    this.css2dRenderer = new CSS2DRenderer();
-    this.css2dRenderer.setSize(canvas.width, canvas.height);
-    this.css2dRenderer.domElement.style.position = "absolute";
-    this.css2dRenderer.domElement.style.top = "0px";
-    document.body.appendChild(this.css2dRenderer.domElement);
     this.threeScene = new THREE.Scene();
     this.scene = scene;
 
@@ -446,14 +274,6 @@ export class MainSceneRenderer implements Renderer {
         new PlayerRenderer(player, this.threeScene)
       );
     }
-
-    const userPlayerRenderer = this.playerRenderers.get(userPlayer);
-
-    this.scoreRenderer = new ScoreRenderer(
-      userPlayer,
-      userPlayerRenderer!,
-      this.threeScene
-    );
 
     // BulletRenderers作成
     this.bulletRenderers = new Map();
@@ -559,16 +379,8 @@ export class MainSceneRenderer implements Renderer {
       this.bulletRenderers.delete(renderer.bullet);
     }
 
-    // スコアの描画
-    if (!this.scoreRenderer?.player.isDead) {
-      this.scoreRenderer?.render();
-    } else {
-      this.scoreRenderer.destroy();
-    }
-
     // cameraの描画
     this.cameraRenderer.render();
-    this.css2dRenderer.render(this.threeScene, this.cameraRenderer.getCamera());
     this.webGLRenderer.render(this.threeScene, this.cameraRenderer.getCamera());
   }
 
@@ -580,7 +392,6 @@ export class MainSceneRenderer implements Renderer {
     for (const bulletRenderer of this.bulletRenderers.values()) {
       bulletRenderer.destroy();
     }
-    this.scoreRenderer?.destroy();
     this.threeScene.removeFromParent();
     this.webGLRenderer.dispose();
   }

@@ -1,5 +1,5 @@
 import { Socket, io } from "socket.io-client";
-import { Vector3 } from "./scenes/models";
+import { Vector3 } from "./utils/vector3";
 
 const { VITE_SERVER_ORIGIN } = import.meta.env;
 

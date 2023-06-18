@@ -1,4 +1,4 @@
-import { Renderer, Scene, SceneType } from "./scenes/models";
+import { Renderer, Scene, SceneType } from "./commons/models";
 import { MainSceneRenderer, MainScene } from "./scenes/Main";
 import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
 import InputManager from "./InputManger";
@@ -38,6 +38,7 @@ export default class GameManager {
 
   switchScene(sceneType: SceneType) {
     this.sceneRenderer.destroy();
+    this.inputManager.destroy();
     this.networkManager.destroy();
     switch (sceneType) {
       case "main": {
@@ -50,6 +51,7 @@ export default class GameManager {
         );
         this.scene = newMainScene;
         this.sceneRenderer = newMainSceneRenderer;
+        this.inputManager = new InputManager();
         this.networkManager = new NetworkManager(
           this.userId,
           (
@@ -65,9 +67,7 @@ export default class GameManager {
           }
         );
         this.networkManager.sendCreatePlayer();
-        this.inputManager.onInputs = (inputs: Map<string, boolean>) => {
-          this.networkManager.sendUserKeyboardInputs(inputs);
-        };
+        this.inputManager = new InputManager();
 
         break;
       }

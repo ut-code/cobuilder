@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Renderer, Scene, SceneType } from "./models";
+import { Renderer, Scene, SceneType } from "../commons/models";
 
 export class LoginScene extends Scene {
   constructor(onSceneDestroyed: (sceneType: SceneType) => void) {

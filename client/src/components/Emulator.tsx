@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import GameManager from "./GameManager";
+import GameManager from "../game/GameManager";
 
 export default function Emulator() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
