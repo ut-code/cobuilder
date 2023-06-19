@@ -1,0 +1,25 @@
+name: Prettier
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  build:
+    name: prettier
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Node setup
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+      - name: common package install
+        run: npm ci
+      - name: client package install && prettier
+        run: cd client && npm ci && npx prettier --check ./src
+      - name: server package install && prettier
+        run: cd server && npm ci && npx prettier --check ./src
