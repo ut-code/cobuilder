@@ -2,7 +2,7 @@ name: eslint
 
 on:
     push: 
-        branches: [ main ]
+        branches: [ master ]
     pull_request:
 
 jobs: 
@@ -17,6 +17,8 @@ jobs:
           uses: actions/checkout@v3
           with:
             node-version: latest
+        - name: common package install
+          run: npm ci
         - name: client package install && eslint
           run: cd client && npm ci && npx eslint ./src
         - name: server package install && eslint
