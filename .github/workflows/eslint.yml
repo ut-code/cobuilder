@@ -22,4 +22,4 @@ jobs:
         - name: client package install && eslint
           run: cd client && npm ci && npx eslint ./src
         - name: server package install && eslint
-          run: cd server && npm ci &&& npx eslint ./src
+          run: cd server && npm ci && npx eslint ./src
