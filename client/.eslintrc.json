@@ -1,4 +1,8 @@
 {
   "ignorePatterns": "dist/*",
-  "rules": { "max-classes-per-file": "off", "@typescript-eslint/no-non-null-assertion": "off" ,"no-restricted-syntax":"off"}
+  "extends": ["plugin:react/recommended"],
+  "plugins": ["react"],
+  "rules": {
+    "react/react-in-jsx-scope": "off"
+  }
 }
