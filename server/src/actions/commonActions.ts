@@ -55,19 +55,25 @@ export class JumpAction implements PlayerAction {
 
   isCompleted = false;
 
-  verticalVelocity: number;
+  verticalVelocity = 0;
 
   constructor(player: Player) {
     this.actor = player;
-    this.verticalVelocity = player.jumpPower;
+    if (player.isJumping) {
+      this.isCompleted = true;
+    } else {
+      this.verticalVelocity = player.jumpPower;
+      this.actor.isJumping = true;
+    }
   }
 
   tick(delta: number): void {
-    this.actor.position.z += this.verticalVelocity * delta * 0.001;
+    this.actor.position.z += this.verticalVelocity * delta * 0.01;
     this.verticalVelocity -= delta * 0.001 * 9.8;
     if (this.actor.position.z <= PLAYER_HEIGHT / 2) {
       this.actor.position.z = PLAYER_HEIGHT / 2;
       this.isCompleted = true;
+      this.actor.isJumping = false;
     }
   }
 }
