@@ -1,10 +1,12 @@
 import cors from "cors";
 import express from "express";
 import http from "http";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import * as dotenv from "dotenv";
-import Game from "./game";
-import { Player } from "./common/model";
+import Game from "./game/game";
+import registerGameHandler from "./event-handlers/gameHandler";
+import registerRoomHandler from "./event-handlers/roomHandler";
+import { RoomManager } from "./roomManager";
 
 dotenv.config();
 
@@ -12,6 +14,7 @@ const app = express();
 const server = http.createServer(app);
 const { WEB_ORIGIN } = process.env;
 
+const roomManager = new RoomManager();
 const game = new Game();
 
 app.use(cors({ origin: [WEB_ORIGIN as string] }));
@@ -35,48 +38,18 @@ setInterval(() => {
   game.updatePlayersIsDead();
 }, 10);
 
-io.on("connection", (socket) => {
+const onConnection = (socket: Socket) => {
   let userId: number;
-  setInterval(() => {
-    socket.emit(
-      "gameData",
-      game.players.map((player) => {
-        const { id, HP, score, position, rotation, isDead } = player;
-        return {
-          id,
-          HP,
-          score,
-          position,
-          rotation,
-          isDead,
-        };
-      }),
-      game.bullets.map((bullet) => {
-        const { id, position, rotation } = bullet;
-        return { id, position, rotation };
-      }),
-      game.obstacles.map((obstacle) => {
-        const { id, position, rotation } = obstacle;
-        return { id, position, rotation };
-      })
-    );
-  }, 10);
-  socket.on("createPlayer", (playerId: number) => {
-    userId = playerId;
-    game.setPlayer(
-      new Player(playerId, game.findEmptySpace(), { x: 0, y: 0, z: 0 })
-    );
-  });
-  socket.on("userKeyboardInputs", (playerId: number, data: string) => {
-    const inputs = JSON.parse(data);
-    game.setUserInputs(playerId, inputs);
-  });
+  registerGameHandler(socket, io, game);
+  registerRoomHandler(socket, io, roomManager);
   socket.on("disconnect", () => {
     const userPlayer = game.getPlayer(userId);
     if (!userPlayer) throw new Error();
     game.removePlayer(userPlayer);
   });
-});
+};
+
+io.on("connection", onConnection);
 
 app.get("/", (request, response) => {
   response.send("connection");
