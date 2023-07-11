@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import * as math from "mathjs";
-import { GameObject, Scene, SceneType, Renderer } from "../commons/models";
+import {
+  GameObject,
+  Scene,
+  Renderer,
+  SceneRenderer,
+  CameraRenderer,
+} from "../commons/models";
 import { rotateVector3, Vector3 } from "../utils/vector3";
 import { BulletStatus, ObstacleStatus, PlayerStatus } from "../NetworkManger";
 import upSky from "../../../resources/clouds1_up.png";
@@ -57,10 +63,7 @@ export class MainScene extends Scene {
 
   bullets: Bullet[] = [];
 
-  constructor(
-    userPlayerId: number,
-    onSceneDestroyed: (sceneType: SceneType) => void
-  ) {
+  constructor(userPlayerId: number, onSceneDestroyed: () => void) {
     super();
     this.userPlayerId = userPlayerId;
     this.onSceneDestroyed = onSceneDestroyed;
@@ -203,22 +206,13 @@ class BulletRenderer implements Renderer {
   }
 }
 
-class CameraRenderer implements Renderer {
+class MainSceneCameraRenderer extends CameraRenderer {
   userPlayer: Player;
 
-  private camera: THREE.PerspectiveCamera;
-
-  threeScene: THREE.Scene;
-
   constructor(aspect: number, threeScene: THREE.Scene, userPlayer: Player) {
+    super(aspect, threeScene);
     this.userPlayer = userPlayer;
-    this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1200);
     this.camera.lookAt(0, 1, 0);
-    this.threeScene = threeScene;
-  }
-
-  getCamera() {
-    return this.camera;
   }
 
   render(): void {
@@ -237,28 +231,23 @@ class CameraRenderer implements Renderer {
   }
 }
 
-export class MainSceneRenderer implements Renderer {
-  private webGLRenderer: THREE.WebGLRenderer;
+export class MainSceneRenderer extends SceneRenderer {
+  protected cameraRenderer: MainSceneCameraRenderer;
 
-  private cameraRenderer;
-
-  threeScene: THREE.Scene;
-
-  private scene: MainScene;
+  protected scene: MainScene;
 
   playerRenderers: Map<Player, PlayerRenderer>;
 
   bulletRenderers: Map<Bullet, BulletRenderer>;
 
   constructor(scene: MainScene, canvas: HTMLCanvasElement) {
-    this.webGLRenderer = new THREE.WebGLRenderer({ canvas });
-    this.threeScene = new THREE.Scene();
+    super(scene, canvas);
     this.scene = scene;
 
     // カメラ作成
     const userPlayer = scene.getPlayer(scene.userPlayerId);
     if (!userPlayer) throw new Error();
-    this.cameraRenderer = new CameraRenderer(
+    this.cameraRenderer = new MainSceneCameraRenderer(
       canvas.width / canvas.height,
       this.threeScene,
       userPlayer
@@ -379,7 +368,7 @@ export class MainSceneRenderer implements Renderer {
 
     // cameraの描画
     this.cameraRenderer.render();
-    this.webGLRenderer.render(this.threeScene, this.cameraRenderer.getCamera());
+    this.webGLRenderer.render(this.threeScene, this.cameraRenderer.Camera);
   }
 
   destroy() {
