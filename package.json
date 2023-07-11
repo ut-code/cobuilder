@@ -12,7 +12,8 @@
     "prepare": "husky install"
   },
   "lint-staged": {
-    "**/*": "prettier --write --ignore-unknown"
+    "**/*.ts": "npx eslint . --fix .",
+    "**/*.tsx": "npx eslint . --fix ." 
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +22,7 @@
     "eslint-config-airbnb-typescript-prettier": "^5.0.0",
     "husky": "^8.0.0",
     "lint-staged": "^13.2.3",
+    "prettier": "^3.0.0",
     "typescript": "^5.1.3"
   }
 }
