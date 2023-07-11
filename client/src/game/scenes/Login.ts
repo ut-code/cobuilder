@@ -1,44 +1,23 @@
 import * as THREE from "three";
-import { Renderer, Scene, SceneType } from "../commons/models";
+import { CameraRenderer, Scene, SceneRenderer } from "../commons/models";
 
 export class LoginScene extends Scene {
-  constructor(onSceneDestroyed: (sceneType: SceneType) => void) {
+  constructor(onSceneDestroyed: () => void) {
     super();
     this.onSceneDestroyed = onSceneDestroyed;
   }
 }
 
-class CameraRenderer implements Renderer {
-  private camera: THREE.PerspectiveCamera;
-
-  threeScene: THREE.Scene;
-
-  constructor(aspect: number, threeScene: THREE.Scene) {
-    this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-    this.threeScene = threeScene;
-  }
-
-  getCamera() {
-    return this.camera;
-  }
-
+class LoginSceneCameraRenderer extends CameraRenderer {
   render(): void {
     this.camera.position.set(0, 10, 0);
   }
-
-  destroy(): void {
-    this.threeScene.remove(this.camera);
-  }
 }
 
-export class LoginSceneRenderer implements Renderer {
+export class LoginSceneRenderer extends SceneRenderer {
   scene: LoginScene;
 
-  threeScene: THREE.Scene;
-
-  cameraRenderer: CameraRenderer;
-
-  webGLRenderer: THREE.WebGLRenderer;
+  cameraRenderer: LoginSceneCameraRenderer;
 
   rayCaster: THREE.Raycaster;
 
@@ -47,16 +26,15 @@ export class LoginSceneRenderer implements Renderer {
   startButton: THREE.Mesh;
 
   constructor(scene: LoginScene, canvas: HTMLCanvasElement) {
-    this.webGLRenderer = new THREE.WebGLRenderer({ canvas });
-    this.threeScene = new THREE.Scene();
-    this.cameraRenderer = new CameraRenderer(
+    super(scene, canvas);
+    this.cameraRenderer = new LoginSceneCameraRenderer(
       canvas.width / canvas.height,
       this.threeScene
     );
     this.scene = scene;
     this.rayCaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
-    this.rayCaster.setFromCamera(this.pointer, this.cameraRenderer.getCamera());
+    this.rayCaster.setFromCamera(this.pointer, this.cameraRenderer.Camera);
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
     this.startButton = new THREE.Mesh(geometry, material);
@@ -78,7 +56,7 @@ export class LoginSceneRenderer implements Renderer {
 
   render(): void {
     this.cameraRenderer.render();
-    this.webGLRenderer.render(this.threeScene, this.cameraRenderer.getCamera());
+    this.webGLRenderer.render(this.threeScene, this.cameraRenderer.Camera);
   }
 
   destroy(): void {
