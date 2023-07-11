@@ -26,7 +26,7 @@ export class LobbyScene extends Scene {
   }
 
   deleteRoom(roomId: number) {
-    const room = this.rooms.find(one => one.id === roomId);
+    const room = this.rooms.find((one) => one.id === roomId);
     if (!room) throw new Error();
     this.rooms.splice(this.rooms.indexOf(room), 1);
   }
