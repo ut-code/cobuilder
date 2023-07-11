@@ -6,7 +6,7 @@ export default function gameHandler(socket: Socket, io: Server, game: Game) {
   setInterval(() => {
     socket.emit(
       "gameData",
-      game.players.map((player) => {
+      game.players.map(player => {
         const { id, HP, score, position, rotation, isDead } = player;
         return {
           id,
@@ -17,11 +17,11 @@ export default function gameHandler(socket: Socket, io: Server, game: Game) {
           isDead,
         };
       }),
-      game.bullets.map((bullet) => {
+      game.bullets.map(bullet => {
         const { id, position, rotation } = bullet;
         return { id, position, rotation };
       }),
-      game.obstacles.map((obstacle) => {
+      game.obstacles.map(obstacle => {
         const { id, position, rotation } = obstacle;
         return { id, position, rotation };
       })

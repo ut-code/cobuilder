@@ -30,14 +30,14 @@ export class RoomManager {
   }
 
   joinRoom(roomId: number, user: User) {
-    const room = this.rooms.find((one) => one.id === roomId);
+    const room = this.rooms.find(one => one.id === roomId);
     if (!room) throw new Error();
     room.users.push(user);
     return room;
   }
 
   deleteRoom(roomId: number) {
-    const room = this.rooms.find((one) => one.id === roomId);
+    const room = this.rooms.find(one => one.id === roomId);
     if (!room) throw new Error();
     this.rooms.splice(this.rooms.indexOf(room), 1);
   }
