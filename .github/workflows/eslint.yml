@@ -1,25 +1,25 @@
 name: eslint
 
 on:
-    push: 
-        branches: [ master ]
-    pull_request:
+  push:
+    branches: [master]
+  pull_request:
 
-jobs: 
+jobs:
   eslint:
     name: eslint
     runs-on: ubuntu-latest
 
     steps:
-        - name: Checkout Code
-          uses: actions/checkout@v3
-        - name: Node setup
-          uses: actions/checkout@v3
-          with:
-            node-version: latest
-        - name: common package install
-          run: npm ci
-        - name: client package install && eslint
-          run: cd client && npm ci && npx eslint ./src
-        - name: server package install && eslint
-          run: cd server && npm ci && npx eslint ./src
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Node setup
+        uses: actions/checkout@v3
+        with:
+          node-version: latest
+      - name: common package install
+        run: npm ci
+      - name: client package install && eslint
+        run: cd client && npm ci && npx eslint ./src
+      - name: server package install && eslint
+        run: cd server && npm ci && npx eslint ./src
