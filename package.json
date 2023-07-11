@@ -13,16 +13,16 @@
   },
   "lint-staged": {
     "**/*.ts": "npx eslint . --fix .",
-    "**/*.tsx": "npx eslint . --fix ." 
+    "**/*.tsx": "npx eslint . --fix ."
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^8.43.0",
+    "eslint": "^8.44.0",
     "eslint-config-airbnb-typescript-prettier": "^5.0.0",
     "husky": "^8.0.0",
     "lint-staged": "^13.2.3",
-    "prettier": "^3.0.0",
-    "typescript": "^5.1.3"
+    "prettier": "2.8.8",
+    "typescript": "^5.1.6"
   }
 }
