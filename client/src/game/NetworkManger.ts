@@ -54,6 +54,18 @@ export default class NetworkManager {
     );
   }
 
+  sendCreateRoom() {
+    this.socket.emit("createRoom", this.playerId);
+  }
+
+  sendJoinRoom() {
+    this.socket.emit("joinRoom", this.playerId);
+  }
+
+  sendLeaveRoom() {
+    this.socket.emit("leaveRoom", this.playerId);
+  }
+
   sendCreatePlayer() {
     this.socket.emit("createPlayer", this.playerId);
   }

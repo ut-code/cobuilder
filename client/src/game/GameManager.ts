@@ -7,6 +7,7 @@ import NetworkManager, {
   ObstacleStatus,
   PlayerStatus,
 } from "./NetworkManger";
+import { LobbyScene, LobbySceneRenderer } from "./scenes/Lobby";
 
 export default class GameManager {
   userId: number;
@@ -24,8 +25,8 @@ export default class GameManager {
   constructor(canvas: HTMLCanvasElement) {
     this.userId = Math.random();
     this.canvas = canvas;
-    this.scene = new LoginScene((sceneType: SceneType) => {
-      this.switchScene(sceneType);
+    this.scene = new LoginScene(() => {
+      this.switchScene("lobby");
     });
     this.sceneRenderer = new LoginSceneRenderer(
       this.scene as LoginScene,
@@ -42,8 +43,8 @@ export default class GameManager {
     this.networkManager.destroy();
     switch (sceneType) {
       case "main": {
-        const newMainScene = new MainScene(this.userId, (type: SceneType) => {
-          this.switchScene(type);
+        const newMainScene = new MainScene(this.userId, () => {
+          this.switchScene("lobby");
         });
         const newMainSceneRenderer = new MainSceneRenderer(
           newMainScene,
@@ -72,11 +73,20 @@ export default class GameManager {
         break;
       }
       case "login":
-        this.scene = new LoginScene((type: SceneType) => {
-          this.switchScene(type);
+        this.scene = new LoginScene(() => {
+          this.switchScene("lobby");
         });
         this.sceneRenderer = new LoginSceneRenderer(
           this.scene as LoginScene,
+          this.canvas
+        );
+        break;
+      case "lobby":
+        this.scene = new LoginScene(() => {
+          this.switchScene("main");
+        });
+        this.sceneRenderer = new LobbySceneRenderer(
+          this.scene as LobbyScene,
           this.canvas
         );
         break;
