@@ -33,7 +33,7 @@ export default class Game {
   userInputs: Map<Player, Record<string, boolean>> = new Map();
 
   getPlayer(id: number) {
-    return this.players.find(player => player.id === id);
+    return this.players.find((player) => player.id === id);
   }
 
   setPlayer(player: Player) {
