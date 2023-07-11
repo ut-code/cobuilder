@@ -73,7 +73,7 @@ export class MainScene extends Scene {
   }
 
   getPlayer(id: number) {
-    return this.players.find(player => player.id === id);
+    return this.players.find((player) => player.id === id);
   }
 
   removePlayer(player: Player) {
@@ -93,7 +93,7 @@ export class MainScene extends Scene {
     // player の更新
     for (const playerStatus of playerStatuses) {
       const { id, HP, score, position, rotation } = playerStatus;
-      const existingPlayer = this.players.find(player => player.id === id);
+      const existingPlayer = this.players.find((player) => player.id === id);
       if (!existingPlayer) {
         this.players.push(new Player(id, position, rotation));
       } else if (!playerStatus.isDead) {
@@ -118,7 +118,9 @@ export class MainScene extends Scene {
     const unusedBullets = new Set(this.bullets);
     for (const bulletStatus of bulletStatuses) {
       const { id: ownerId, position, rotation } = bulletStatus;
-      const existingBullet = this.bullets.find(bullet => bullet.id === ownerId);
+      const existingBullet = this.bullets.find(
+        (bullet) => bullet.id === ownerId
+      );
       if (!existingBullet) {
         this.bullets.push(new Bullet(ownerId, position, rotation));
       } else {
@@ -292,7 +294,7 @@ export class MainSceneRenderer extends SceneRenderer {
       new THREE.TextureLoader().load(northSky),
       new THREE.TextureLoader().load(southSky),
     ];
-    const materialArray = textureArray.map(texture => {
+    const materialArray = textureArray.map((texture) => {
       return new THREE.MeshBasicMaterial({
         map: texture,
         side: THREE.BackSide,
