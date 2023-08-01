@@ -1,4 +1,4 @@
-import { Renderer, Scene, SceneType } from "./commons/models";
+import { Scene, SceneRenderer, SceneType } from "./commons/models";
 import { MainSceneRenderer, MainScene } from "./scenes/Main";
 import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
 import InputManager from "./InputManger";
@@ -14,17 +14,20 @@ export default class GameManager {
 
   canvas: HTMLCanvasElement;
 
+  display: HTMLDivElement;
+
   private scene: Scene;
 
-  private sceneRenderer: Renderer;
+  private sceneRenderer: SceneRenderer;
 
   private inputManager: InputManager;
 
   private networkManager: NetworkManager;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, display: HTMLDivElement) {
     this.userId = Math.random();
     this.canvas = canvas;
+    this.display = display;
     this.scene = new LoginScene(() => {
       this.switchScene("lobby");
     });
@@ -34,7 +37,7 @@ export default class GameManager {
     );
     this.inputManager = new InputManager();
     this.networkManager = new NetworkManager(this.userId);
-    this.switchScene("main");
+    this.switchScene("lobby");
   }
 
   switchScene(sceneType: SceneType) {
@@ -82,12 +85,13 @@ export default class GameManager {
         );
         break;
       case "lobby":
-        this.scene = new LoginScene(() => {
+        this.scene = new LobbyScene(() => {
           this.switchScene("main");
         });
         this.sceneRenderer = new LobbySceneRenderer(
           this.scene as LobbyScene,
-          this.canvas
+          this.canvas,
+          this.display
         );
         break;
       default:

@@ -31,6 +31,7 @@ export class CameraRenderer implements Renderer {
 
   constructor(aspect: number, threeScene: THREE.Scene) {
     this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+    console.log(this.camera);
     this.threeScene = threeScene;
   }
 

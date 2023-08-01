@@ -227,10 +227,6 @@ class MainSceneCameraRenderer extends CameraRenderer {
     this.camera.position.set(x + deltaX, y + deltaY, z + deltaZ);
     this.camera.rotation.y = -math.atan2(-vector.x, -vector.y);
   }
-
-  destroy(): void {
-    this.threeScene.remove(this.camera);
-  }
 }
 
 export class MainSceneRenderer extends SceneRenderer {
@@ -370,7 +366,7 @@ export class MainSceneRenderer extends SceneRenderer {
 
     // cameraの描画
     this.cameraRenderer.render();
-    this.webGLRenderer.render(this.threeScene, this.cameraRenderer.Camera);
+    super.render();
   }
 
   destroy() {

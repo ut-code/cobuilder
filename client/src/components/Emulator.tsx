@@ -2,14 +2,17 @@ import { useCallback, useEffect, useRef } from "react";
 import GameManager from "../game/GameManager";
 
 export default function Emulator() {
+  const divRef = useRef<HTMLDivElement | null>(null);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const gameRef = useRef<GameManager | null>(null);
 
   useEffect(() => {
     const currentCanvas = canvasRef.current;
-    if (!currentCanvas) throw new Error();
-    const gameManager = new GameManager(currentCanvas);
+    const currentDisplay = divRef.current;
+    if (!currentCanvas || !currentDisplay) throw new Error();
+    const gameManager = new GameManager(currentCanvas, currentDisplay);
     gameRef.current = gameManager;
     gameRef.current.run();
     return () => {
@@ -38,8 +41,11 @@ export default function Emulator() {
   }, [handleUserInput]);
 
   return (
-    <canvas ref={canvasRef} width={800} height={450}>
-      WebGL描画用キャンバス
-    </canvas>
+    <>
+      <div className="aaaa" ref={divRef} />
+      <canvas ref={canvasRef} width={800} height={450}>
+        WebGL描画用キャンバス
+      </canvas>
+    </>
   );
 }
