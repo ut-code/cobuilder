@@ -2,7 +2,10 @@ import { Scene, SceneRenderer, SceneType } from "./commons/models";
 import { MainSceneRenderer, MainScene } from "./scenes/Main";
 import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
 import InputManager from "./InputManger";
-import NetworkManager, {
+import {
+  NetworkManager,
+  MainSceneNetworkManager,
+  LobbySceneNetworkManager,
   BulletStatus,
   ObstacleStatus,
   PlayerStatus,
@@ -36,7 +39,7 @@ export default class GameManager {
       canvas
     );
     this.inputManager = new InputManager();
-    this.networkManager = new NetworkManager(this.userId);
+    this.networkManager = new MainSceneNetworkManager(this.userId);
     this.switchScene("lobby");
   }
 
@@ -55,10 +58,7 @@ export default class GameManager {
         );
         this.scene = newMainScene;
         this.sceneRenderer = newMainSceneRenderer;
-        this.inputManager = new InputManager((inputs: Map<string, boolean>) => {
-          this.networkManager.sendUserKeyboardInputs(inputs);
-        });
-        this.networkManager = new NetworkManager(
+        const newNetworkManager = new MainSceneNetworkManager(
           this.userId,
           (
             playerStatuses: PlayerStatus[],
@@ -72,7 +72,11 @@ export default class GameManager {
             );
           }
         );
-        this.networkManager.sendCreatePlayer();
+        this.networkManager = newNetworkManager;
+        this.inputManager = new InputManager((inputs: Map<string, boolean>) => {
+          newNetworkManager.sendUserKeyboardInputs(inputs);
+        });
+        newNetworkManager.sendCreatePlayer();
         break;
       }
       case "login":
@@ -84,16 +88,22 @@ export default class GameManager {
           this.canvas
         );
         break;
-      case "lobby":
+      case "lobby": {
         this.scene = new LobbyScene(() => {
           this.switchScene("main");
         });
+        const newNetworkManager = new LobbySceneNetworkManager();
+        this.networkManager = newNetworkManager;
         this.sceneRenderer = new LobbySceneRenderer(
           this.scene as LobbyScene,
           this.canvas,
-          this.display
+          this.display,
+          () => {
+            newNetworkManager.sendCreateRoom();
+          }
         );
         break;
+      }
       default:
         throw new Error("scene not found");
     }

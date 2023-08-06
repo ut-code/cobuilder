@@ -74,7 +74,8 @@ class DOMRenderer implements Renderer {
     threeScene: THREE.Scene,
     cameraREnderer: CameraRenderer,
     scene: LobbyScene,
-    onSceneDestroyed: () => void
+    onSceneDestroyed: () => void,
+    onRoomAdded: () => void
   ) {
     this.display = display;
     this.threeScene = threeScene;
@@ -83,25 +84,32 @@ class DOMRenderer implements Renderer {
     this.onSceneDestroyed = onSceneDestroyed;
     this.css2dRenderer = new CSS2DRenderer({ element: display });
     this.css2dRenderer.domElement.style.position = "absolute";
-    this.css2dRenderer.domElement.style.backgroundColor = "yellow";
     this.css2dRenderer.domElement.style.width = "600px";
     this.css2dRenderer.domElement.style.height = "400px";
+    const background = document.createElement("div");
+    background.style.width = "100%";
+    background.style.height = "100%";
+    background.style.backgroundColor = "yellow";
     const table = document.createElement("table");
     for (const room of this.scene.rooms) {
       const row = document.createElement("tr");
       const roomName = document.createElement("td");
       roomName.className = "room";
       roomName.textContent = room.name;
-      const joinButton = document.createElement("td");
-      const button = document.createElement("button");
-      button.textContent = "Join";
-      button.onclick = onSceneDestroyed;
-      joinButton.appendChild(button);
+      const joinTd = document.createElement("td");
+      const joinButton = document.createElement("button");
+      joinButton.textContent = "Join";
+      joinButton.onclick = onSceneDestroyed;
+      joinTd.appendChild(joinButton);
       row.appendChild(roomName);
-      row.appendChild(joinButton);
+      row.appendChild(joinTd);
       table.appendChild(row);
     }
-    const css2dObject = new CSS2DObject(table);
+    const addButton = document.createElement("button");
+    addButton.textContent = "Add";
+    addButton.onclick = onRoomAdded;
+    background.appendChild(table);
+    const css2dObject = new CSS2DObject(background);
     this.threeScene.add(css2dObject);
     this.css2dObjects.push(css2dObject);
   }
@@ -126,7 +134,8 @@ export class LobbySceneRenderer extends SceneRenderer {
   constructor(
     scene: LobbyScene,
     canvas: HTMLCanvasElement,
-    display: HTMLDivElement
+    display: HTMLDivElement,
+    onAddClicked: () => void
   ) {
     super(scene, canvas);
     this.scene = scene;
@@ -140,7 +149,8 @@ export class LobbySceneRenderer extends SceneRenderer {
       this.threeScene,
       this.cameraRenderer,
       this.scene,
-      this.scene.onSceneDestroyed
+      this.scene.onSceneDestroyed,
+      onAddClicked
     );
   }
 

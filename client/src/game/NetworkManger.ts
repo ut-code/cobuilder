@@ -1,5 +1,6 @@
 import { Socket, io } from "socket.io-client";
 import { Vector3 } from "./utils/vector3";
+import { SceneType } from "./commons/models";
 
 const { VITE_SERVER_ORIGIN } = import.meta.env;
 
@@ -30,17 +31,33 @@ type StatusesHandler = (
   obstacleStatuses: ObstacleStatus[]
 ) => void;
 
-export default class NetworkManager {
-  playerId: number;
+export abstract class NetworkManager {
+  type: SceneType | null = null;
 
-  socket: Socket;
+  protected socket: Socket;
+
+  constructor() {
+    this.socket = io(VITE_SERVER_ORIGIN as string, {
+      query: { type: this.type },
+    });
+  }
+
+  destroy() {
+    this.socket.disconnect();
+  }
+}
+
+export class MainSceneNetworkManager extends NetworkManager {
+  type: SceneType = "main";
+
+  playerId: number;
 
   onGameData?: StatusesHandler;
 
   constructor(playerId: number, onGameData?: StatusesHandler) {
+    super();
     this.playerId = playerId;
     this.onGameData = onGameData;
-    this.socket = io(VITE_SERVER_ORIGIN as string);
     this.socket.on(
       "gameData",
       (
@@ -54,18 +71,6 @@ export default class NetworkManager {
     );
   }
 
-  sendCreateRoom() {
-    this.socket.emit("createRoom", this.playerId);
-  }
-
-  sendJoinRoom() {
-    this.socket.emit("joinRoom", this.playerId);
-  }
-
-  sendLeaveRoom() {
-    this.socket.emit("leaveRoom", this.playerId);
-  }
-
   sendCreatePlayer() {
     this.socket.emit("createPlayer", this.playerId);
   }
@@ -74,8 +79,20 @@ export default class NetworkManager {
     const data = JSON.stringify(Object.fromEntries(inputs));
     this.socket.emit("userKeyboardInputs", this.playerId, data);
   }
+}
 
-  destroy() {
-    this.socket.disconnect();
+export class LobbySceneNetworkManager extends NetworkManager {
+  type: SceneType = "lobby";
+
+  sendCreateRoom() {
+    this.socket.emit("createRoom");
+  }
+
+  sendJoinRoom() {
+    this.socket.emit("joinRoom");
+  }
+
+  sendLeaveRoom() {
+    this.socket.emit("leaveRoom");
   }
 }
