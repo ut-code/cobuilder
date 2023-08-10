@@ -76,8 +76,20 @@ export class MainScene extends Scene {
     return this.players.find((player) => player.id === id);
   }
 
+  addPlayer(player: Player) {
+    this.players.push(player);
+  }
+
   removePlayer(player: Player) {
     this.players.splice(this.players.indexOf(player), 1);
+  }
+
+  getBullet(id: number) {
+    return this.bullets.find((bullet) => bullet.id === id);
+  }
+
+  addBullet(bullet: Bullet) {
+    this.bullets.push(bullet);
   }
 
   removeBullet(bullet: Bullet) {
@@ -93,9 +105,9 @@ export class MainScene extends Scene {
     // player の更新
     for (const playerStatus of playerStatuses) {
       const { id, HP, score, position, rotation } = playerStatus;
-      const existingPlayer = this.players.find((player) => player.id === id);
+      const existingPlayer = this.getPlayer(id);
       if (!existingPlayer) {
-        this.players.push(new Player(id, position, rotation));
+        this.addPlayer(new Player(id, position, rotation));
       } else if (!playerStatus.isDead) {
         if (existingPlayer.position !== position) {
           existingPlayer.position = position;
@@ -118,11 +130,9 @@ export class MainScene extends Scene {
     const unusedBullets = new Set(this.bullets);
     for (const bulletStatus of bulletStatuses) {
       const { id: ownerId, position, rotation } = bulletStatus;
-      const existingBullet = this.bullets.find(
-        (bullet) => bullet.id === ownerId
-      );
+      const existingBullet = this.getBullet(ownerId);
       if (!existingBullet) {
-        this.bullets.push(new Bullet(ownerId, position, rotation));
+        this.addBullet(new Bullet(ownerId, position, rotation));
       } else {
         unusedBullets.delete(existingBullet);
         if (existingBullet.position !== position) {

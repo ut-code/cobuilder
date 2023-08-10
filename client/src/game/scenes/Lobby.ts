@@ -1,14 +1,7 @@
-import {
-  CSS2DRenderer,
-  CSS2DObject,
-} from "three/examples/jsm/renderers/CSS2DRenderer";
 import * as THREE from "three";
-import {
-  Scene,
-  SceneRenderer,
-  CameraRenderer,
-  Renderer,
-} from "../commons/models";
+import { Scene, SceneRenderer, CameraRenderer } from "../commons/models";
+import { RoomData } from "../NetworkManger";
+import { PointerState } from "../InputManger";
 
 export class Room {
   id: number;
@@ -24,12 +17,15 @@ export class Room {
 export class LobbyScene extends Scene {
   rooms: Room[] = [];
 
+  pointerState: PointerState = { x: 0, y: 0, isPointerDown: false };
+
   constructor(onSceneDestroyed: () => void) {
     super();
     this.onSceneDestroyed = onSceneDestroyed;
-    for (let i = 0; i < 10; i += 1) {
-      this.rooms.push(new Room(i, `Room ${i}`));
-    }
+  }
+
+  getRoom(roomId: number) {
+    return this.rooms.find((one) => one.id === roomId);
   }
 
   addRoom(room: Room) {
@@ -45,6 +41,27 @@ export class LobbyScene extends Scene {
   destroy(): void {
     this.onSceneDestroyed?.();
   }
+
+  updateRooms(roomsData: RoomData[]) {
+    const unusedRooms = new Set(this.rooms);
+    for (const roomData of roomsData) {
+      const existingRoom = this.getRoom(roomData.id);
+      if (!existingRoom) {
+        this.addRoom(new Room(roomData.id, "new room"));
+      } else {
+        unusedRooms.delete(existingRoom);
+      }
+    }
+    for (const room of unusedRooms) {
+      this.deleteRoom(room.id);
+    }
+  }
+
+  updatePointerState(pointerState: PointerState) {
+    this.pointerState.x = pointerState.x;
+    this.pointerState.y = pointerState.y;
+    this.pointerState.isPointerDown = pointerState.isPointerDown;
+  }
 }
 
 class LobbySceneCameraRenderer extends CameraRenderer {
@@ -54,115 +71,123 @@ class LobbySceneCameraRenderer extends CameraRenderer {
   }
 }
 
-class DOMRenderer implements Renderer {
-  private css2dRenderer: CSS2DRenderer;
+class Button {
+  canvas: HTMLCanvasElement;
 
-  private css2dObjects: CSS2DObject[] = [];
-
-  scene: LobbyScene;
+  sprite: THREE.Sprite;
 
   threeScene: THREE.Scene;
 
-  cameraRenderer: CameraRenderer;
-
-  display: HTMLDivElement;
-
-  onSceneDestroyed: () => void;
-
-  constructor(
-    display: HTMLDivElement,
-    threeScene: THREE.Scene,
-    cameraREnderer: CameraRenderer,
-    scene: LobbyScene,
-    onSceneDestroyed: () => void,
-    onRoomAdded: () => void
-  ) {
-    this.display = display;
+  constructor(canvas: HTMLCanvasElement, threeScene: THREE.Scene) {
+    const magnifiedWidth = 4000;
+    const magnifiedHeight = 4000;
+    this.canvas = canvas;
     this.threeScene = threeScene;
-    this.cameraRenderer = cameraREnderer;
-    this.scene = scene;
-    this.onSceneDestroyed = onSceneDestroyed;
-    this.css2dRenderer = new CSS2DRenderer({ element: display });
-    this.css2dRenderer.domElement.style.position = "absolute";
-    this.css2dRenderer.domElement.style.width = "600px";
-    this.css2dRenderer.domElement.style.height = "400px";
-    const background = document.createElement("div");
-    background.style.width = "100%";
-    background.style.height = "100%";
-    background.style.backgroundColor = "yellow";
-    const table = document.createElement("table");
-    for (const room of this.scene.rooms) {
-      const row = document.createElement("tr");
-      const roomName = document.createElement("td");
-      roomName.className = "room";
-      roomName.textContent = room.name;
-      const joinTd = document.createElement("td");
-      const joinButton = document.createElement("button");
-      joinButton.textContent = "Join";
-      joinButton.onclick = onSceneDestroyed;
-      joinTd.appendChild(joinButton);
-      row.appendChild(roomName);
-      row.appendChild(joinTd);
-      table.appendChild(row);
-    }
-    const addButton = document.createElement("button");
-    addButton.textContent = "Add";
-    addButton.onclick = onRoomAdded;
-    background.appendChild(table);
-    const css2dObject = new CSS2DObject(background);
-    this.threeScene.add(css2dObject);
-    this.css2dObjects.push(css2dObject);
-  }
-
-  render(): void {
-    this.css2dRenderer.render(this.threeScene, this.cameraRenderer.Camera);
+    const canvasForText = document.createElement("canvas");
+    canvasForText.width = magnifiedWidth;
+    canvasForText.height = magnifiedHeight;
+    const ctx = canvasForText.getContext("2d");
+    if (!ctx) throw new Error();
+    ctx.fillStyle = "green";
+    ctx.fillRect(0, 0, magnifiedHeight, magnifiedWidth);
+    ctx.fillStyle = "black";
+    ctx.font = `${magnifiedWidth / 2}px Arial`;
+    const text = "+";
+    ctx.fillText(
+      text,
+      (magnifiedWidth - ctx.measureText(text).width) / 2,
+      magnifiedHeight / 2 + ctx.measureText(text).actualBoundingBoxAscent / 2
+    );
+    const canvasTexture = new THREE.CanvasTexture(canvasForText);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: canvasTexture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    this.sprite = sprite;
+    threeScene.add(sprite);
   }
 
   destroy(): void {
-    for (const css2dObject of this.css2dObjects) {
-      this.threeScene.remove(css2dObject);
-    }
+    this.threeScene.remove(this.sprite);
   }
 }
+
 export class LobbySceneRenderer extends SceneRenderer {
   protected scene: LobbyScene;
 
   protected cameraRenderer: LobbySceneCameraRenderer;
 
-  protected domRenderer: DOMRenderer;
+  private matchRowRenderers: Map<Room, THREE.Sprite> = new Map();
+
+  private raycaster = new THREE.Raycaster();
+
+  private addButton: Button;
+
+  onAddButtonClick: () => void;
 
   constructor(
     scene: LobbyScene,
     canvas: HTMLCanvasElement,
-    display: HTMLDivElement,
-    onAddClicked: () => void
+    onAddButtonClick: () => void
   ) {
     super(scene, canvas);
     this.scene = scene;
+    this.onAddButtonClick = onAddButtonClick;
     this.cameraRenderer = new LobbySceneCameraRenderer(
       canvas.width / canvas.height,
       this.threeScene
     );
     if (!this.scene.onSceneDestroyed) throw new Error();
-    this.domRenderer = new DOMRenderer(
-      display,
-      this.threeScene,
-      this.cameraRenderer,
-      this.scene,
-      this.scene.onSceneDestroyed,
-      onAddClicked
-    );
+    // + ボタン作成
+    const addButton = new Button(canvas, this.threeScene);
+    this.addButton = addButton;
+  }
+
+  createRow(room: Room) {
+    const canvasForText = document.createElement("canvas");
+    const ctx = canvasForText.getContext("2d");
+    ctx!.fillStyle = "green";
+    ctx!.fillRect(0, 0, 15000, 10000);
+    const canvasTexture = new THREE.CanvasTexture(canvasForText);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: canvasTexture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    this.threeScene.add(sprite);
+    this.matchRowRenderers.set(room, sprite);
   }
 
   render(): void {
-    this.domRenderer.render();
+    // マッチの行を作成
+    const unusedRenderers = new Set(this.matchRowRenderers.values());
+    for (const room of this.scene.rooms) {
+      const renderer = this.matchRowRenderers.get(room);
+      if (!renderer) {
+        this.createRow(room);
+      } else {
+        unusedRenderers.delete(renderer);
+      }
+    }
+    for (const renderer of unusedRenderers) {
+      this.threeScene.remove(renderer);
+    }
+    const rows = Array.from(this.matchRowRenderers.values());
+    rows.forEach((row, index) => {
+      row.position.set(0, 0.5 - index, 0);
+    });
+    // クリック判定
+    const { x, y } = this.scene.pointerState;
+    const pointer = new THREE.Vector2(x, y);
+    this.raycaster.setFromCamera(pointer, this.cameraRenderer.Camera);
+    const intersects = this.raycaster.intersectObject(this.addButton.sprite);
+    if (intersects.length > 0) {
+      if (this.scene.pointerState.isPointerDown) {
+        this.onAddButtonClick();
+      }
+    }
     this.cameraRenderer.render();
     super.render();
   }
 
   destroy(): void {
-    this.domRenderer.destroy();
     this.cameraRenderer.destroy();
+    this.addButton.destroy();
     super.destroy();
   }
 }

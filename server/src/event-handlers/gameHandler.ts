@@ -1,8 +1,12 @@
-import { Server, Socket } from "socket.io";
+import { Socket } from "socket.io";
 import Game from "../game/game";
 import { Player } from "../game/common/model";
 
-export default function gameHandler(socket: Socket, io: Server, game: Game) {
+export default function gameHandler(
+  socket: Socket,
+  game: Game,
+  userId: number
+) {
   setInterval(() => {
     socket.emit(
       "gameData",
@@ -35,5 +39,10 @@ export default function gameHandler(socket: Socket, io: Server, game: Game) {
   socket.on("userKeyboardInputs", (playerId: number, data: string) => {
     const inputs = JSON.parse(data);
     game.setUserInputs(playerId, inputs);
+  });
+  socket.on("disconnect", () => {
+    const userPlayer = game.getPlayer(Number(userId));
+    if (!userPlayer) throw new Error();
+    game.removePlayer(userPlayer);
   });
 }

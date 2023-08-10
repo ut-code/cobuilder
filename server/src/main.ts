@@ -39,14 +39,24 @@ setInterval(() => {
 }, 10);
 
 const onConnection = (socket: Socket) => {
-  let userId: number;
-  registerGameHandler(socket, io, game);
-  registerRoomHandler(socket, io, roomManager);
-  socket.on("disconnect", () => {
-    const userPlayer = game.getPlayer(userId);
-    if (!userPlayer) throw new Error();
-    game.removePlayer(userPlayer);
-  });
+  const { networkManagerName, userId, userName } = socket.handshake.query;
+  switch (networkManagerName) {
+    case "LobbySceneNetworkManager": {
+      registerRoomHandler(
+        socket,
+        roomManager,
+        Number(userId),
+        String(userName)
+      );
+      break;
+    }
+    case "MainSceneNetworkManager": {
+      registerGameHandler(socket, game, Number(userId));
+      break;
+    }
+    default:
+      throw new Error(`Unexpected name: ${networkManagerName}`);
+  }
 };
 
 io.on("connection", onConnection);

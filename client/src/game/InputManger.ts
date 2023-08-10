@@ -1,27 +1,38 @@
+export type KeyStates = Map<string, boolean>;
+
+export type PointerState = { x: number; y: number; isPointerDown: boolean };
+
 export default class InputManager {
-  readonly keyStates: Map<string, boolean>;
+  readonly keyStates: KeyStates;
 
-  readonly pointerCoordinates: { x: number; y: number } = { x: 0, y: 0 };
+  readonly pointerState: PointerState = { x: 0, y: 0, isPointerDown: false };
 
-  onInputsProcessed?: (inputs: Map<string, boolean>) => void;
+  private canvas: HTMLCanvasElement;
 
-  constructor(onInputsProcessed?: (inputs: Map<string, boolean>) => void) {
+  onInputsProcessed?: () => void;
+
+  constructor(canvas: HTMLCanvasElement, onInputsProcessed?: () => void) {
     this.keyStates = new Map<string, boolean>();
     this.onInputsProcessed = onInputsProcessed;
+    this.canvas = canvas;
   }
 
-  processKeyboardInputs(e: KeyboardEvent) {
-    this.keyStates.set(e.key, e.type === "keydown");
-    this.onInputsProcessed?.(this.keyStates);
-  }
-
-  processPointerInputs(
-    e: PointerEvent,
-    canvasWidth: number,
-    canvasHeight: number
-  ) {
-    this.pointerCoordinates.x = (e.clientX / canvasWidth) * 2 - 1;
-    this.pointerCoordinates.y = -(e.clientY / canvasHeight) * 2 + 1;
+  processInputs(e: Event) {
+    if (e instanceof KeyboardEvent) {
+      this.keyStates.set(e.key, e.type === "keydown");
+      this.onInputsProcessed?.();
+    } else if (e instanceof PointerEvent) {
+      this.pointerState.x =
+        ((e.clientX - this.canvas.offsetLeft) * 2) / this.canvas.width - 1;
+      this.pointerState.y =
+        -((e.clientY - this.canvas.offsetTop) * 2) / this.canvas.height + 1;
+      if (e.type === "pointerup") {
+        this.pointerState.isPointerDown = false;
+      } else if (e.type === "pointerdown") {
+        this.pointerState.isPointerDown = true;
+      }
+      this.onInputsProcessed?.();
+    }
   }
 
   destroy() {

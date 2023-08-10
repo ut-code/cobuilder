@@ -2,17 +2,14 @@ import { useCallback, useEffect, useRef } from "react";
 import GameManager from "../game/GameManager";
 
 export default function Emulator() {
-  const divRef = useRef<HTMLDivElement | null>(null);
-
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const gameRef = useRef<GameManager | null>(null);
 
   useEffect(() => {
     const currentCanvas = canvasRef.current;
-    const currentDisplay = divRef.current;
-    if (!currentCanvas || !currentDisplay) throw new Error();
-    const gameManager = new GameManager(currentCanvas, currentDisplay);
+    if (!currentCanvas) throw new Error();
+    const gameManager = new GameManager(currentCanvas);
     gameRef.current = gameManager;
     gameRef.current.run();
     return () => {
@@ -33,19 +30,20 @@ export default function Emulator() {
     window.addEventListener("keydown", handleUserInput);
     window.addEventListener("keyup", handleUserInput);
     currentCanvas.addEventListener("pointermove", handleUserInput);
+    currentCanvas.addEventListener("pointerdown", handleUserInput);
+    currentCanvas.addEventListener("pointerup", handleUserInput);
     return () => {
       window.removeEventListener("keydown", handleUserInput);
       window.removeEventListener("keyup", handleUserInput);
       currentCanvas.removeEventListener("pointermove", handleUserInput);
+      currentCanvas.removeEventListener("pointerdown", handleUserInput);
+      currentCanvas.removeEventListener("pointerup", handleUserInput);
     };
   }, [handleUserInput]);
 
   return (
-    <>
-      <div className="aaaa" ref={divRef} />
-      <canvas ref={canvasRef} width={800} height={450}>
-        WebGL描画用キャンバス
-      </canvas>
-    </>
+    <canvas ref={canvasRef} width={800} height={450}>
+      WebGL描画用キャンバス
+    </canvas>
   );
 }

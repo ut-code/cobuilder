@@ -1,15 +1,37 @@
-import { Server, Socket } from "socket.io";
-import { RoomManager, User } from "../roomManager";
+import { Socket } from "socket.io";
+import { Room, RoomManager, User } from "../roomManager";
 
 export default function roomHandler(
   socket: Socket,
-  io: Server,
-  roomManager: RoomManager
+  roomManager: RoomManager,
+  userId: number,
+  userName: string
 ) {
-  socket.on("createRoom", (user: User) => {
-    roomManager.createRoom(user);
+  roomManager.addUser(new User(userId, userName));
+  setInterval(() => {
+    socket.emit(
+      "roomsData",
+      roomManager.rooms.map((room: Room) => {
+        return {
+          id: room.id,
+          users: room.users.map((user: User) => {
+            return { id: user.id, name: user.name };
+          }),
+        };
+      })
+    );
+  }, 10);
+  socket.on("createRoom", () => {
+    const user = roomManager.getUser(userId);
+    if (user && !user.isWaiting) {
+      roomManager.createRoom("new room", user);
+      user.isWaiting = true;
+    }
   });
   socket.on("joinRoom", (roomId: number, user: User) => {
     roomManager.joinRoom(roomId, user);
+  });
+  socket.on("disconnect", () => {
+    roomManager.removeUser(userId);
   });
 }

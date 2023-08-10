@@ -8,6 +8,12 @@ export abstract class Scene {
   onSceneDestroyed?(): void;
 }
 
+export interface User {
+  id: number;
+
+  name: string;
+}
+
 export interface GameObject {
   id: number;
 
@@ -19,7 +25,7 @@ export interface GameObject {
 export interface Renderer {
   threeScene: THREE.Scene;
 
-  render(): void;
+  render?(): void;
 
   destroy(): void;
 }
@@ -31,7 +37,6 @@ export class CameraRenderer implements Renderer {
 
   constructor(aspect: number, threeScene: THREE.Scene) {
     this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-    console.log(this.camera);
     this.threeScene = threeScene;
   }
 

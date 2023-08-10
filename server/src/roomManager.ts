@@ -1,6 +1,8 @@
 export class User {
   id: number;
 
+  isWaiting = false;
+
   name: string;
 
   constructor(id: number, name: string) {
@@ -12,19 +14,38 @@ export class User {
 export class Room {
   id: number;
 
+  name: string;
+
   users: User[] = [];
 
-  constructor(id: number, user: User) {
+  constructor(id: number, name: string, user: User) {
     this.id = id;
+    this.name = name;
     this.users.push(user);
   }
 }
 
 export class RoomManager {
+  usersInLobby: User[] = [];
+
   rooms: Room[] = [];
 
-  createRoom(user: User) {
-    const room = new Room(Math.random(), user);
+  getUser(userId: number) {
+    return this.usersInLobby.find((one) => one.id === userId);
+  }
+
+  addUser(user: User) {
+    this.usersInLobby.push(user);
+  }
+
+  removeUser(userId: number) {
+    const user = this.usersInLobby.find((one) => one.id === userId);
+    if (!user) throw new Error();
+    this.usersInLobby.splice(this.usersInLobby.indexOf(user), 1);
+  }
+
+  createRoom(name: string, user: User) {
+    const room = new Room(Math.random(), name, user);
     this.rooms.push(room);
     return room;
   }

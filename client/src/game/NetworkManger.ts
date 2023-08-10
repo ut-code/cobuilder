@@ -1,6 +1,6 @@
 import { Socket, io } from "socket.io-client";
 import { Vector3 } from "./utils/vector3";
-import { SceneType } from "./commons/models";
+import { User } from "./commons/models";
 
 const { VITE_SERVER_ORIGIN } = import.meta.env;
 
@@ -31,14 +31,22 @@ type StatusesHandler = (
   obstacleStatuses: ObstacleStatus[]
 ) => void;
 
+export type RoomData = {
+  id: number;
+  users: User[];
+};
+
+type RoomsDataHandler = (roomsData: RoomData[]) => void;
+
 export abstract class NetworkManager {
-  type: SceneType | null = null;
+  userId: number;
 
   protected socket: Socket;
 
-  constructor() {
+  constructor(userId: number, userName: string) {
+    this.userId = userId;
     this.socket = io(VITE_SERVER_ORIGIN as string, {
-      query: { type: this.type },
+      query: { networkManagerName: this.constructor.name, userId, userName },
     });
   }
 
@@ -47,16 +55,17 @@ export abstract class NetworkManager {
   }
 }
 
+export class LoginSceneNetworkManager extends NetworkManager {
+  sendLogin() {
+    this.socket.emit("login", this.userId);
+  }
+}
+
 export class MainSceneNetworkManager extends NetworkManager {
-  type: SceneType = "main";
+  onGameData: StatusesHandler;
 
-  playerId: number;
-
-  onGameData?: StatusesHandler;
-
-  constructor(playerId: number, onGameData?: StatusesHandler) {
-    super();
-    this.playerId = playerId;
+  constructor(userId: number, userName: string, onGameData: StatusesHandler) {
+    super(userId, userName);
     this.onGameData = onGameData;
     this.socket.on(
       "gameData",
@@ -65,24 +74,31 @@ export class MainSceneNetworkManager extends NetworkManager {
         bulletStatuses: BulletStatus[],
         obstacleStatuses: ObstacleStatus[]
       ) => {
-        if (!this.onGameData) throw new Error();
         this.onGameData(playerStatuses, bulletStatuses, obstacleStatuses);
       }
     );
   }
 
   sendCreatePlayer() {
-    this.socket.emit("createPlayer", this.playerId);
+    this.socket.emit("createPlayer", this.userId);
   }
 
   sendUserKeyboardInputs(inputs: Map<string, boolean>) {
     const data = JSON.stringify(Object.fromEntries(inputs));
-    this.socket.emit("userKeyboardInputs", this.playerId, data);
+    this.socket.emit("userKeyboardInputs", this.userId, data);
   }
 }
 
 export class LobbySceneNetworkManager extends NetworkManager {
-  type: SceneType = "lobby";
+  onRoomsData: RoomsDataHandler;
+
+  constructor(userId: number, userName: string, onRoomsData: RoomsDataHandler) {
+    super(userId, userName);
+    this.onRoomsData = onRoomsData;
+    this.socket.on("roomsData", (roomsData: RoomData[]) => {
+      this.onRoomsData(roomsData);
+    });
+  }
 
   sendCreateRoom() {
     this.socket.emit("createRoom");
