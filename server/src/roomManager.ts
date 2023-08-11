@@ -1,4 +1,4 @@
-export class User {
+export class UserInLobby {
   id: number;
 
   isWaiting = false;
@@ -16,9 +16,9 @@ export class Room {
 
   name: string;
 
-  users: User[] = [];
+  users: UserInLobby[] = [];
 
-  constructor(id: number, name: string, user: User) {
+  constructor(id: number, name: string, user: UserInLobby) {
     this.id = id;
     this.name = name;
     this.users.push(user);
@@ -26,7 +26,7 @@ export class Room {
 }
 
 export class RoomManager {
-  usersInLobby: User[] = [];
+  usersInLobby: UserInLobby[] = [];
 
   rooms: Room[] = [];
 
@@ -34,7 +34,7 @@ export class RoomManager {
     return this.usersInLobby.find((one) => one.id === userId);
   }
 
-  addUser(user: User) {
+  addUser(user: UserInLobby) {
     this.usersInLobby.push(user);
   }
 
@@ -44,13 +44,13 @@ export class RoomManager {
     this.usersInLobby.splice(this.usersInLobby.indexOf(user), 1);
   }
 
-  createRoom(name: string, user: User) {
+  createRoom(name: string, user: UserInLobby) {
     const room = new Room(Math.random(), name, user);
     this.rooms.push(room);
     return room;
   }
 
-  joinRoom(roomId: number, user: User) {
+  joinRoom(roomId: number, user: UserInLobby) {
     const room = this.rooms.find((one) => one.id === roomId);
     if (!room) throw new Error();
     room.users.push(user);

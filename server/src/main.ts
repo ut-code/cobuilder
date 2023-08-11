@@ -6,7 +6,7 @@ import * as dotenv from "dotenv";
 import Game from "./game/game";
 import registerGameHandler from "./event-handlers/gameHandler";
 import registerRoomHandler from "./event-handlers/roomHandler";
-import { RoomManager } from "./roomManager";
+import { RoomManager, UserInLobby } from "./roomManager";
 
 dotenv.config();
 
@@ -27,6 +27,11 @@ const io = new Server(server, {
   },
 });
 
+export interface User {
+  id: number;
+  name: string;
+}
+
 let currentTime = Date.now();
 setInterval(() => {
   const previousTime = currentTime;
@@ -39,19 +44,19 @@ setInterval(() => {
 }, 10);
 
 const onConnection = (socket: Socket) => {
-  const { networkManagerName, userId, userName } = socket.handshake.query;
+  const { networkManagerName, user } = socket.handshake.query;
+  const userObject = JSON.parse(user as string) as User;
   switch (networkManagerName) {
     case "LobbySceneNetworkManager": {
       registerRoomHandler(
         socket,
         roomManager,
-        Number(userId),
-        String(userName)
+        new UserInLobby(userObject.id, userObject.name)
       );
       break;
     }
     case "MainSceneNetworkManager": {
-      registerGameHandler(socket, game, Number(userId));
+      registerGameHandler(socket, game, userObject.id);
       break;
     }
     default:

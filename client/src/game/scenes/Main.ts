@@ -8,7 +8,7 @@ import {
   CameraRenderer,
 } from "../commons/models";
 import { rotateVector3, Vector3 } from "../utils/vector3";
-import { BulletStatus, ObstacleStatus, PlayerStatus } from "../NetworkManger";
+import { GameData } from "../NetworkManger";
 import upSky from "../../../resources/clouds1_up.png";
 import downSky from "../../../resources/clouds1_down.png";
 import eastSky from "../../../resources/clouds1_east.png";
@@ -96,12 +96,8 @@ export class MainScene extends Scene {
     this.bullets.splice(this.bullets.indexOf(bullet), 1);
   }
 
-  updateGameObjects(
-    playerStatuses: PlayerStatus[],
-    bulletStatuses: BulletStatus[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    obstacleStatuses: ObstacleStatus[]
-  ) {
+  updateScene(gameData: GameData) {
+    const { playerStatuses, bulletStatuses } = gameData;
     // player の更新
     for (const playerStatus of playerStatuses) {
       const { id, HP, score, position, rotation } = playerStatus;

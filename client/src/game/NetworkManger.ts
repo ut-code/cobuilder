@@ -25,28 +25,33 @@ export type ObstacleStatus = {
   rotation: Vector3;
 };
 
-type StatusesHandler = (
-  playerStatuses: PlayerStatus[],
-  bulletStatuses: BulletStatus[],
-  obstacleStatuses: ObstacleStatus[]
-) => void;
+export type GameData = {
+  playerStatuses: PlayerStatus[];
+  bulletStatuses: BulletStatus[];
+  obstacleStatuses: ObstacleStatus[];
+};
 
 export type RoomData = {
   id: number;
   users: User[];
 };
 
-type RoomsDataHandler = (roomsData: RoomData[]) => void;
+export type LobbyData = {
+  rooms: RoomData[];
+};
 
 export abstract class NetworkManager {
-  userId: number;
+  user: User;
 
   protected socket: Socket;
 
-  constructor(userId: number, userName: string) {
-    this.userId = userId;
+  constructor(user: User) {
+    this.user = user;
     this.socket = io(VITE_SERVER_ORIGIN as string, {
-      query: { networkManagerName: this.constructor.name, userId, userName },
+      query: {
+        networkManagerName: this.constructor.name,
+        user: JSON.stringify(user),
+      },
     });
   }
 
@@ -57,46 +62,53 @@ export abstract class NetworkManager {
 
 export class LoginSceneNetworkManager extends NetworkManager {
   sendLogin() {
-    this.socket.emit("login", this.userId);
+    this.socket.emit("login", this.user);
   }
 }
 
 export class MainSceneNetworkManager extends NetworkManager {
-  onGameData: StatusesHandler;
+  private onGameData: () => void;
 
-  constructor(userId: number, userName: string, onGameData: StatusesHandler) {
-    super(userId, userName);
+  gameData: {
+    playerStatuses: PlayerStatus[];
+    bulletStatuses: BulletStatus[];
+    obstacleStatuses: ObstacleStatus[];
+  } = { playerStatuses: [], bulletStatuses: [], obstacleStatuses: [] };
+
+  constructor(user: User, onGameData: () => void) {
+    super(user);
     this.onGameData = onGameData;
-    this.socket.on(
-      "gameData",
-      (
-        playerStatuses: PlayerStatus[],
-        bulletStatuses: BulletStatus[],
-        obstacleStatuses: ObstacleStatus[]
-      ) => {
-        this.onGameData(playerStatuses, bulletStatuses, obstacleStatuses);
-      }
-    );
+    this.socket.on("gameData", (gameData: GameData) => {
+      this.updateGameData(gameData);
+      this.onGameData();
+    });
   }
 
   sendCreatePlayer() {
-    this.socket.emit("createPlayer", this.userId);
+    this.socket.emit("createPlayer", this.user);
   }
 
   sendUserKeyboardInputs(inputs: Map<string, boolean>) {
     const data = JSON.stringify(Object.fromEntries(inputs));
-    this.socket.emit("userKeyboardInputs", this.userId, data);
+    this.socket.emit("userKeyboardInputs", this.user, data);
+  }
+
+  private updateGameData(gameData: GameData) {
+    this.gameData = gameData;
   }
 }
 
 export class LobbySceneNetworkManager extends NetworkManager {
-  onRoomsData: RoomsDataHandler;
+  onLobbyData: () => void;
 
-  constructor(userId: number, userName: string, onRoomsData: RoomsDataHandler) {
-    super(userId, userName);
-    this.onRoomsData = onRoomsData;
-    this.socket.on("roomsData", (roomsData: RoomData[]) => {
-      this.onRoomsData(roomsData);
+  lobbyData: LobbyData = { rooms: [] };
+
+  constructor(user: User, onLobbyData: () => void) {
+    super(user);
+    this.onLobbyData = onLobbyData;
+    this.socket.on("lobbyData", (lobbyData: LobbyData) => {
+      this.updateLobbyData(lobbyData);
+      this.onLobbyData();
     });
   }
 
@@ -110,5 +122,9 @@ export class LobbySceneNetworkManager extends NetworkManager {
 
   sendLeaveRoom() {
     this.socket.emit("leaveRoom");
+  }
+
+  private updateLobbyData(lobbyData: LobbyData) {
+    this.lobbyData = lobbyData;
   }
 }

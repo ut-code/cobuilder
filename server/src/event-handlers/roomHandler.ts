@@ -1,37 +1,35 @@
 import { Socket } from "socket.io";
-import { Room, RoomManager, User } from "../roomManager";
+import { Room, RoomManager, UserInLobby } from "../roomManager";
 
 export default function roomHandler(
   socket: Socket,
   roomManager: RoomManager,
-  userId: number,
-  userName: string
+  user: UserInLobby
 ) {
-  roomManager.addUser(new User(userId, userName));
+  roomManager.addUser(new UserInLobby(user.id, user.name));
   setInterval(() => {
-    socket.emit(
-      "roomsData",
-      roomManager.rooms.map((room: Room) => {
+    socket.emit("lobbyData", {
+      rooms: roomManager.rooms.map((room: Room) => {
         return {
           id: room.id,
-          users: room.users.map((user: User) => {
-            return { id: user.id, name: user.name };
+          users: room.users.map((userInLobby: UserInLobby) => {
+            return { id: userInLobby.id, name: userInLobby.name };
           }),
         };
-      })
-    );
+      }),
+    });
   }, 10);
   socket.on("createRoom", () => {
-    const user = roomManager.getUser(userId);
-    if (user && !user.isWaiting) {
-      roomManager.createRoom("new room", user);
-      user.isWaiting = true;
+    const userInLobby = roomManager.getUser(user.id);
+    if (userInLobby && !userInLobby.isWaiting) {
+      roomManager.createRoom("new room", userInLobby);
+      userInLobby.isWaiting = true;
     }
   });
-  socket.on("joinRoom", (roomId: number, user: User) => {
-    roomManager.joinRoom(roomId, user);
+  socket.on("joinRoom", (roomId: number, userInLobby: UserInLobby) => {
+    roomManager.joinRoom(roomId, userInLobby);
   });
   socket.on("disconnect", () => {
-    roomManager.removeUser(userId);
+    roomManager.removeUser(user.id);
   });
 }

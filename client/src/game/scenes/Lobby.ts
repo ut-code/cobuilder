@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { Scene, SceneRenderer, CameraRenderer } from "../commons/models";
-import { RoomData } from "../NetworkManger";
+import { LobbyData } from "../NetworkManger";
 import { PointerState } from "../InputManger";
 
 export class Room {
@@ -32,7 +32,7 @@ export class LobbyScene extends Scene {
     this.rooms.push(room);
   }
 
-  deleteRoom(roomId: number) {
+  removeRoom(roomId: number) {
     const room = this.rooms.find((one) => one.id === roomId);
     if (!room) throw new Error();
     this.rooms.splice(this.rooms.indexOf(room), 1);
@@ -42,9 +42,9 @@ export class LobbyScene extends Scene {
     this.onSceneDestroyed?.();
   }
 
-  updateRooms(roomsData: RoomData[]) {
+  updateScene(lobbyData: LobbyData) {
     const unusedRooms = new Set(this.rooms);
-    for (const roomData of roomsData) {
+    for (const roomData of lobbyData.rooms) {
       const existingRoom = this.getRoom(roomData.id);
       if (!existingRoom) {
         this.addRoom(new Room(roomData.id, "new room"));
@@ -53,7 +53,7 @@ export class LobbyScene extends Scene {
       }
     }
     for (const room of unusedRooms) {
-      this.deleteRoom(room.id);
+      this.removeRoom(room.id);
     }
   }
 
@@ -71,18 +71,23 @@ class LobbySceneCameraRenderer extends CameraRenderer {
   }
 }
 
-class Button {
-  canvas: HTMLCanvasElement;
-
+abstract class UI {
   sprite: THREE.Sprite;
 
-  threeScene: THREE.Scene;
+  protected threeScene: THREE.Scene;
 
-  constructor(canvas: HTMLCanvasElement, threeScene: THREE.Scene) {
+  constructor(threeScene: THREE.Scene) {
+    this.threeScene = threeScene;
+    this.sprite = new THREE.Sprite();
+  }
+}
+
+class Button extends UI {
+  constructor(threeScene: THREE.Scene) {
+    super(threeScene);
+    // sprite 作成
     const magnifiedWidth = 4000;
     const magnifiedHeight = 4000;
-    this.canvas = canvas;
-    this.threeScene = threeScene;
     const canvasForText = document.createElement("canvas");
     canvasForText.width = magnifiedWidth;
     canvasForText.height = magnifiedHeight;
@@ -110,12 +115,36 @@ class Button {
   }
 }
 
+class MatchRow extends UI {
+  constructor(threeScene: THREE.Scene) {
+    super(threeScene);
+    const canvasForText = document.createElement("canvas");
+    const ctx = canvasForText.getContext("2d");
+    ctx!.fillStyle = "green";
+    ctx!.fillRect(0, 0, 10000, 10000);
+    const canvasTexture = new THREE.CanvasTexture(canvasForText);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: canvasTexture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(3, 1, 1);
+    this.sprite = sprite;
+    threeScene.add(sprite);
+  }
+
+  setPosition(x: number, y: number, z: number) {
+    this.sprite.position.set(x, y, z);
+  }
+
+  destroy(): void {
+    this.threeScene.remove(this.sprite);
+  }
+}
+
 export class LobbySceneRenderer extends SceneRenderer {
   protected scene: LobbyScene;
 
   protected cameraRenderer: LobbySceneCameraRenderer;
 
-  private matchRowRenderers: Map<Room, THREE.Sprite> = new Map();
+  private matchRowRenderers: Map<Room, MatchRow> = new Map();
 
   private raycaster = new THREE.Raycaster();
 
@@ -137,39 +166,32 @@ export class LobbySceneRenderer extends SceneRenderer {
     );
     if (!this.scene.onSceneDestroyed) throw new Error();
     // + ボタン作成
-    const addButton = new Button(canvas, this.threeScene);
+    const addButton = new Button(this.threeScene);
     this.addButton = addButton;
   }
 
-  createRow(room: Room) {
-    const canvasForText = document.createElement("canvas");
-    const ctx = canvasForText.getContext("2d");
-    ctx!.fillStyle = "green";
-    ctx!.fillRect(0, 0, 15000, 10000);
-    const canvasTexture = new THREE.CanvasTexture(canvasForText);
-    const spriteMaterial = new THREE.SpriteMaterial({ map: canvasTexture });
-    const sprite = new THREE.Sprite(spriteMaterial);
-    this.threeScene.add(sprite);
-    this.matchRowRenderers.set(room, sprite);
+  private createRow(room: Room) {
+    const row = new MatchRow(this.threeScene);
+    this.matchRowRenderers.set(room, row);
   }
 
   render(): void {
     // マッチの行を作成
-    const unusedRenderers = new Set(this.matchRowRenderers.values());
+    const unusedRows = new Set(this.matchRowRenderers.values());
     for (const room of this.scene.rooms) {
-      const renderer = this.matchRowRenderers.get(room);
-      if (!renderer) {
+      const row = this.matchRowRenderers.get(room);
+      if (!row) {
         this.createRow(room);
       } else {
-        unusedRenderers.delete(renderer);
+        unusedRows.delete(row);
       }
     }
-    for (const renderer of unusedRenderers) {
-      this.threeScene.remove(renderer);
+    for (const row of unusedRows) {
+      this.threeScene.remove(row.sprite);
     }
     const rows = Array.from(this.matchRowRenderers.values());
     rows.forEach((row, index) => {
-      row.position.set(0, 0.5 - index, 0);
+      row.setPosition(5, 6 - index, 0);
     });
     // クリック判定
     const { x, y } = this.scene.pointerState;
@@ -188,6 +210,9 @@ export class LobbySceneRenderer extends SceneRenderer {
   destroy(): void {
     this.cameraRenderer.destroy();
     this.addButton.destroy();
+    for (const renderer of this.matchRowRenderers.values()) {
+      renderer.destroy();
+    }
     super.destroy();
   }
 }

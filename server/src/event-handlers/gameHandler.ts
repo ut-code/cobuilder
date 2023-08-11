@@ -8,9 +8,8 @@ export default function gameHandler(
   userId: number
 ) {
   setInterval(() => {
-    socket.emit(
-      "gameData",
-      game.players.map((player) => {
+    socket.emit("gameData", {
+      playerStatuses: game.players.map((player) => {
         const { id, HP, score, position, rotation, isDead } = player;
         return {
           id,
@@ -21,15 +20,15 @@ export default function gameHandler(
           isDead,
         };
       }),
-      game.bullets.map((bullet) => {
+      bulletStatuses: game.bullets.map((bullet) => {
         const { id, position, rotation } = bullet;
         return { id, position, rotation };
       }),
-      game.obstacles.map((obstacle) => {
+      obstacleStatuses: game.obstacles.map((obstacle) => {
         const { id, position, rotation } = obstacle;
         return { id, position, rotation };
-      })
-    );
+      }),
+    });
   }, 10);
   socket.on("createPlayer", (playerId: number) => {
     game.setPlayer(
