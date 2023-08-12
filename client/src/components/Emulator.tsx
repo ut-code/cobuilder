@@ -30,10 +30,14 @@ export default function Emulator() {
     window.addEventListener("keydown", handleUserInput);
     window.addEventListener("keyup", handleUserInput);
     currentCanvas.addEventListener("pointermove", handleUserInput);
+    currentCanvas.addEventListener("pointerdown", handleUserInput);
+    currentCanvas.addEventListener("pointerup", handleUserInput);
     return () => {
       window.removeEventListener("keydown", handleUserInput);
       window.removeEventListener("keyup", handleUserInput);
       currentCanvas.removeEventListener("pointermove", handleUserInput);
+      currentCanvas.removeEventListener("pointerdown", handleUserInput);
+      currentCanvas.removeEventListener("pointerup", handleUserInput);
     };
   }, [handleUserInput]);
 

@@ -1,12 +1,15 @@
-import { Server, Socket } from "socket.io";
+import { Socket } from "socket.io";
 import Game from "../game/game";
 import { Player } from "../game/common/model";
 
-export default function gameHandler(socket: Socket, io: Server, game: Game) {
+export default function gameHandler(
+  socket: Socket,
+  game: Game,
+  userId: number
+) {
   setInterval(() => {
-    socket.emit(
-      "gameData",
-      game.players.map((player) => {
+    socket.emit("gameData", {
+      playerStatuses: game.players.map((player) => {
         const { id, HP, score, position, rotation, isDead } = player;
         return {
           id,
@@ -17,15 +20,15 @@ export default function gameHandler(socket: Socket, io: Server, game: Game) {
           isDead,
         };
       }),
-      game.bullets.map((bullet) => {
+      bulletStatuses: game.bullets.map((bullet) => {
         const { id, position, rotation } = bullet;
         return { id, position, rotation };
       }),
-      game.obstacles.map((obstacle) => {
+      obstacleStatuses: game.obstacles.map((obstacle) => {
         const { id, position, rotation } = obstacle;
         return { id, position, rotation };
-      })
-    );
+      }),
+    });
   }, 10);
   socket.on("createPlayer", (playerId: number) => {
     game.setPlayer(
@@ -35,5 +38,10 @@ export default function gameHandler(socket: Socket, io: Server, game: Game) {
   socket.on("userKeyboardInputs", (playerId: number, data: string) => {
     const inputs = JSON.parse(data);
     game.setUserInputs(playerId, inputs);
+  });
+  socket.on("disconnect", () => {
+    const userPlayer = game.getPlayer(Number(userId));
+    if (!userPlayer) throw new Error();
+    game.removePlayer(userPlayer);
   });
 }

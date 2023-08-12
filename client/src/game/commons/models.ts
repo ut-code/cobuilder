@@ -8,6 +8,12 @@ export abstract class Scene {
   onSceneDestroyed?(): void;
 }
 
+export interface User {
+  id: number;
+
+  name: string;
+}
+
 export interface GameObject {
   id: number;
 
@@ -19,7 +25,7 @@ export interface GameObject {
 export interface Renderer {
   threeScene: THREE.Scene;
 
-  render(): void;
+  render?(): void;
 
   destroy(): void;
 }

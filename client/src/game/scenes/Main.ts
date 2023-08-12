@@ -8,7 +8,7 @@ import {
   CameraRenderer,
 } from "../commons/models";
 import { rotateVector3, Vector3 } from "../utils/vector3";
-import { BulletStatus, ObstacleStatus, PlayerStatus } from "../NetworkManger";
+import { GameData } from "../NetworkManger";
 import upSky from "../../../resources/clouds1_up.png";
 import downSky from "../../../resources/clouds1_down.png";
 import eastSky from "../../../resources/clouds1_east.png";
@@ -76,26 +76,34 @@ export class MainScene extends Scene {
     return this.players.find((player) => player.id === id);
   }
 
+  addPlayer(player: Player) {
+    this.players.push(player);
+  }
+
   removePlayer(player: Player) {
     this.players.splice(this.players.indexOf(player), 1);
+  }
+
+  getBullet(id: number) {
+    return this.bullets.find((bullet) => bullet.id === id);
+  }
+
+  addBullet(bullet: Bullet) {
+    this.bullets.push(bullet);
   }
 
   removeBullet(bullet: Bullet) {
     this.bullets.splice(this.bullets.indexOf(bullet), 1);
   }
 
-  updateGameObjects(
-    playerStatuses: PlayerStatus[],
-    bulletStatuses: BulletStatus[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    obstacleStatuses: ObstacleStatus[]
-  ) {
+  updateScene(gameData: GameData) {
+    const { playerStatuses, bulletStatuses } = gameData;
     // player の更新
     for (const playerStatus of playerStatuses) {
       const { id, HP, score, position, rotation } = playerStatus;
-      const existingPlayer = this.players.find((player) => player.id === id);
+      const existingPlayer = this.getPlayer(id);
       if (!existingPlayer) {
-        this.players.push(new Player(id, position, rotation));
+        this.addPlayer(new Player(id, position, rotation));
       } else if (!playerStatus.isDead) {
         if (existingPlayer.position !== position) {
           existingPlayer.position = position;
@@ -118,11 +126,9 @@ export class MainScene extends Scene {
     const unusedBullets = new Set(this.bullets);
     for (const bulletStatus of bulletStatuses) {
       const { id: ownerId, position, rotation } = bulletStatus;
-      const existingBullet = this.bullets.find(
-        (bullet) => bullet.id === ownerId
-      );
+      const existingBullet = this.getBullet(ownerId);
       if (!existingBullet) {
-        this.bullets.push(new Bullet(ownerId, position, rotation));
+        this.addBullet(new Bullet(ownerId, position, rotation));
       } else {
         unusedBullets.delete(existingBullet);
         if (existingBullet.position !== position) {
@@ -226,10 +232,6 @@ class MainSceneCameraRenderer extends CameraRenderer {
     const { x: deltaX, y: deltaY, z: deltaZ } = vector;
     this.camera.position.set(x + deltaX, y + deltaY, z + deltaZ);
     this.camera.rotation.y = -math.atan2(-vector.x, -vector.y);
-  }
-
-  destroy(): void {
-    this.threeScene.remove(this.camera);
   }
 }
 
@@ -370,7 +372,7 @@ export class MainSceneRenderer extends SceneRenderer {
 
     // cameraの描画
     this.cameraRenderer.render();
-    this.webGLRenderer.render(this.threeScene, this.cameraRenderer.Camera);
+    super.render();
   }
 
   destroy() {

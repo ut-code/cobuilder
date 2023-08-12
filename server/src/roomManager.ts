@@ -1,5 +1,7 @@
-export class User {
+export class UserInLobby {
   id: number;
+
+  isWaiting = false;
 
   name: string;
 
@@ -12,24 +14,43 @@ export class User {
 export class Room {
   id: number;
 
-  users: User[] = [];
+  name: string;
 
-  constructor(id: number, user: User) {
+  users: UserInLobby[] = [];
+
+  constructor(id: number, name: string, user: UserInLobby) {
     this.id = id;
+    this.name = name;
     this.users.push(user);
   }
 }
 
 export class RoomManager {
+  usersInLobby: UserInLobby[] = [];
+
   rooms: Room[] = [];
 
-  createRoom(user: User) {
-    const room = new Room(Math.random(), user);
+  getUser(userId: number) {
+    return this.usersInLobby.find((one) => one.id === userId);
+  }
+
+  addUser(user: UserInLobby) {
+    this.usersInLobby.push(user);
+  }
+
+  removeUser(userId: number) {
+    const user = this.usersInLobby.find((one) => one.id === userId);
+    if (!user) throw new Error();
+    this.usersInLobby.splice(this.usersInLobby.indexOf(user), 1);
+  }
+
+  createRoom(name: string, user: UserInLobby) {
+    const room = new Room(Math.random(), name, user);
     this.rooms.push(room);
     return room;
   }
 
-  joinRoom(roomId: number, user: User) {
+  joinRoom(roomId: number, user: UserInLobby) {
     const room = this.rooms.find((one) => one.id === roomId);
     if (!room) throw new Error();
     room.users.push(user);

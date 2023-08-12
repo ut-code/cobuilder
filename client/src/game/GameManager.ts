@@ -1,29 +1,31 @@
-import { Renderer, Scene, SceneType } from "./commons/models";
+import { Scene, SceneRenderer, SceneType, User } from "./commons/models";
 import { MainSceneRenderer, MainScene } from "./scenes/Main";
 import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
 import InputManager from "./InputManger";
-import NetworkManager, {
-  BulletStatus,
-  ObstacleStatus,
-  PlayerStatus,
+import {
+  NetworkManager,
+  MainSceneNetworkManager,
+  LobbySceneNetworkManager,
+  LoginSceneNetworkManager,
 } from "./NetworkManger";
 import { LobbyScene, LobbySceneRenderer } from "./scenes/Lobby";
 
 export default class GameManager {
-  userId: number;
+  user: User = { id: 0, name: "" };
 
   canvas: HTMLCanvasElement;
 
   private scene: Scene;
 
-  private sceneRenderer: Renderer;
+  private sceneRenderer: SceneRenderer;
 
   private inputManager: InputManager;
 
   private networkManager: NetworkManager;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.userId = Math.random();
+    this.user.id = Math.random();
+    this.user.name = "userName";
     this.canvas = canvas;
     this.scene = new LoginScene(() => {
       this.switchScene("lobby");
@@ -32,9 +34,9 @@ export default class GameManager {
       this.scene as LoginScene,
       canvas
     );
-    this.inputManager = new InputManager();
-    this.networkManager = new NetworkManager(this.userId);
-    this.switchScene("main");
+    this.inputManager = new InputManager(this.canvas);
+    this.networkManager = new LoginSceneNetworkManager(this.user);
+    this.switchScene("lobby");
   }
 
   switchScene(sceneType: SceneType) {
@@ -43,36 +45,22 @@ export default class GameManager {
     this.networkManager.destroy();
     switch (sceneType) {
       case "main": {
-        const newMainScene = new MainScene(this.userId, () => {
+        const newMainScene = new MainScene(this.user.id, () => {
           this.switchScene("lobby");
         });
-        const newMainSceneRenderer = new MainSceneRenderer(
-          newMainScene,
-          this.canvas
-        );
         this.scene = newMainScene;
-        this.sceneRenderer = newMainSceneRenderer;
-        this.inputManager = new InputManager((inputs: Map<string, boolean>) => {
-          this.networkManager.sendUserKeyboardInputs(inputs);
+        const newNetworkManager = new MainSceneNetworkManager(this.user, () => {
+          newMainScene.updateScene(newNetworkManager.gameData);
         });
-        this.networkManager = new NetworkManager(
-          this.userId,
-          (
-            playerStatuses: PlayerStatus[],
-            bulletStatuses: BulletStatus[],
-            obstacleStatuses: ObstacleStatus[]
-          ) => {
-            newMainScene.updateGameObjects(
-              playerStatuses,
-              bulletStatuses,
-              obstacleStatuses
-            );
-          }
-        );
-        this.networkManager.sendCreatePlayer();
+        this.networkManager = newNetworkManager;
+        this.inputManager = new InputManager(this.canvas, () => {
+          newNetworkManager.sendUserKeyboardInputs(this.inputManager.keyStates);
+        });
+        newNetworkManager.sendCreatePlayer();
+        this.sceneRenderer = new MainSceneRenderer(newMainScene, this.canvas);
         break;
       }
-      case "login":
+      case "login": {
         this.scene = new LoginScene(() => {
           this.switchScene("lobby");
         });
@@ -81,15 +69,31 @@ export default class GameManager {
           this.canvas
         );
         break;
-      case "lobby":
-        this.scene = new LoginScene(() => {
+      }
+      case "lobby": {
+        const newLobbyScene = new LobbyScene(() => {
           this.switchScene("main");
         });
+        this.scene = newLobbyScene;
+        const newNetworkManager = new LobbySceneNetworkManager(
+          this.user,
+          () => {
+            newLobbyScene.updateScene(newNetworkManager.lobbyData);
+          }
+        );
+        this.networkManager = newNetworkManager;
         this.sceneRenderer = new LobbySceneRenderer(
           this.scene as LobbyScene,
-          this.canvas
+          this.canvas,
+          () => {
+            newNetworkManager.sendCreateRoom();
+          }
         );
+        this.inputManager = new InputManager(this.canvas, () => {
+          newLobbyScene.updatePointerState(this.inputManager.pointerState);
+        });
         break;
+      }
       default:
         throw new Error("scene not found");
     }
@@ -104,16 +108,7 @@ export default class GameManager {
   }
 
   handleUserInput(e: KeyboardEvent | PointerEvent) {
-    if (this.scene instanceof MainScene) {
-      if (e instanceof KeyboardEvent)
-        this.inputManager?.processKeyboardInputs(e);
-      else
-        this.inputManager?.processPointerInputs(
-          e,
-          this.canvas.width,
-          this.canvas.height
-        );
-    }
+    this.inputManager?.processInputs(e);
   }
 
   destroy() {

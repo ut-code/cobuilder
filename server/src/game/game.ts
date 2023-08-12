@@ -84,7 +84,7 @@ export default class Game {
     }
   }
 
-  addPlayerAction(playerAction: PlayerAction) {
+  private addPlayerAction(playerAction: PlayerAction) {
     this.playerActions.add(playerAction);
   }
 
