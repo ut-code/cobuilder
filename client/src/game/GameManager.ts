@@ -28,7 +28,7 @@ export default class GameManager {
     this.user.name = "userName";
     this.canvas = canvas;
     this.scene = new LoginScene(() => {
-      this.switchScene("lobby");
+      this.switchScene("login");
     });
     this.sceneRenderer = new LoginSceneRenderer(
       this.scene as LoginScene,
@@ -36,7 +36,7 @@ export default class GameManager {
     );
     this.inputManager = new InputManager(this.canvas);
     this.networkManager = new LoginSceneNetworkManager(this.user);
-    this.switchScene("lobby");
+    this.switchScene("login");
   }
 
   switchScene(sceneType: SceneType) {
