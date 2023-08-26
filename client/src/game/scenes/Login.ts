@@ -10,7 +10,7 @@ export class LoginScene extends Scene {
 
 class LoginSceneCameraRenderer extends CameraRenderer {
   render(): void {
-    this.camera.position.set(0, 10, 0);
+    this.camera.position.set(2, 2, 10);
   }
 }
 
@@ -23,7 +23,9 @@ export class LoginSceneRenderer extends SceneRenderer {
 
   pointer: THREE.Vector2;
 
-  startButton: THREE.Mesh;
+  loginButton: THREE.Sprite;
+
+  canvas: HTMLCanvasElement;
 
   constructor(scene: LoginScene, canvas: HTMLCanvasElement) {
     super(scene, canvas);
@@ -38,24 +40,37 @@ export class LoginSceneRenderer extends SceneRenderer {
     this.scene = scene;
     this.rayCaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
+    this.canvas = canvas;
     this.rayCaster.setFromCamera(this.pointer, this.cameraRenderer.Camera);
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    this.startButton = new THREE.Mesh(geometry, material);
-    this.threeScene.add(this.startButton);
+    // ログインボタンを作成
+    const createTexture = (filepath: string) => {
+      return new THREE.TextureLoader().load(filepath);
+    };
+    const createSprite = (
+      loginTexture: THREE.Texture,
+      scale: THREE.Vector3,
+      position: THREE.Vector3
+    ) => {
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: loginTexture,
+      });
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.scale.set(scale.x, scale.y, scale.z);
+      sprite.position.set(position.x, position.y, position.z);
+      return sprite;
+    };
+    const loginTexture = createTexture("../../../resources/login.png");
+    this.loginButton = createSprite(
+      loginTexture,
+      new THREE.Vector3(4, 2, 2),
+      new THREE.Vector3(1.5, 1.5, 0)
+    );
+    this.loginButton.name = "loginButton";
+    this.threeScene.add(this.loginButton);
   }
 
   setPointer(x: number, y: number) {
     this.pointer.set(x, y);
-  }
-
-  handleStartButtonClick() {
-    const intersects = this.rayCaster.intersectObjects<
-      THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>
-    >([this.startButton]);
-    for (const intersect of intersects) {
-      intersect.object.material.color.set(0x00ff00);
-    }
   }
 
   render(): void {
