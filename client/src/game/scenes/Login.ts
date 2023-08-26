@@ -67,6 +67,21 @@ export class LoginSceneRenderer extends SceneRenderer {
     );
     this.loginButton.name = "loginButton";
     this.threeScene.add(this.loginButton);
+    // ログインボタンをクリックしたときの処理
+    const handleLoginButton = (e: MouseEvent) => {
+      this.pointer.x = (e.clientX / this.canvas.width) * 2 - 1;
+      this.pointer.y = -(e.clientY / this.canvas.height) * 2 + 1;
+      this.rayCaster.setFromCamera(this.pointer, this.cameraRenderer.Camera);
+      const intersects = this.rayCaster.intersectObject(this.loginButton);
+      if (
+        intersects.length > 0 &&
+        intersects[0].object.name === "loginButton"
+      ) {
+        // eslint-disable-next-line no-console
+        console.log(intersects);
+      }
+    };
+    this.canvas.addEventListener("click", handleLoginButton.bind(this), false);
   }
 
   setPointer(x: number, y: number) {
