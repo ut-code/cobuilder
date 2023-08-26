@@ -31,6 +31,10 @@ export class LoginSceneRenderer extends SceneRenderer {
       canvas.width / canvas.height,
       this.threeScene
     );
+    // 背景写真を設定
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load("../../../resources/clouds1_north.png");
+    this.threeScene.background = texture;
     this.scene = scene;
     this.rayCaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
