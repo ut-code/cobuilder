@@ -1,8 +1,8 @@
-import { Socket } from "socket.io";
+import { WebSocket } from "ws";
 import { Room, RoomManager, UserInLobby } from "../roomManager";
 
 export default function roomHandler(
-  socket: Socket,
+  socket: WebSocket,
   roomManager: RoomManager,
   user: UserInLobby
 ) {

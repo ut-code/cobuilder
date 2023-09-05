@@ -1,5 +1,5 @@
 import { Vector3 } from "../utils/vector3";
-import { Player, PLAYER_HEIGHT } from "../common/model";
+import { Player, PLAYER_HEIGHT } from "../model";
 
 export interface PlayerAction {
   actor: Player;

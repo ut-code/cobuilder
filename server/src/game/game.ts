@@ -1,5 +1,5 @@
 import * as math from "mathjs";
-import { rotateVector3 } from "./utils/vector3";
+import rotateVector3 from "common/utils/rotateVector3";
 import {
   GameObject,
   Player,
@@ -8,7 +8,7 @@ import {
   PLAYER_HEIGHT,
   PLAYER_WIDTH,
   STAGE_WIDTH,
-} from "./common/model";
+} from "./model";
 import {
   PlayerAction,
   MoveAction,

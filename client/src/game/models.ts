@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { Vector3 } from "../utils/vector3";
+import { Vector3 } from "shared";
 
 export type SceneType = "login" | "main" | "lobby";
 

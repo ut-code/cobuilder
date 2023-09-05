@@ -1,7 +1,8 @@
 import cors from "cors";
 import express from "express";
 import http from "http";
-import { Server, Socket } from "socket.io";
+import url from "url";
+import { WebSocketServer, WebSocket } from "ws";
 import * as dotenv from "dotenv";
 import Game from "./game/game";
 import registerGameHandler from "./event-handlers/gameHandler";
@@ -21,11 +22,7 @@ app.use(cors({ origin: [WEB_ORIGIN as string] }));
 
 app.use(express.json());
 
-const io = new Server(server, {
-  cors: {
-    origin: [WEB_ORIGIN as string],
-  },
-});
+const wss = new WebSocketServer({ server, path: WEB_ORIGIN as string });
 
 export interface User {
   id: number;
@@ -43,20 +40,21 @@ setInterval(() => {
   game.updatePlayersIsDead();
 }, 10);
 
-const onConnection = (socket: Socket) => {
-  const { networkManagerName, user } = socket.handshake.query;
+const onConnection = (ws: WebSocket, request: http.IncomingMessage) => {
+  const queryParameters = url.parse(request.url as string, true).query;
+  const { networkManagerName, user } = queryParameters;
   const userObject = JSON.parse(user as string) as User;
   switch (networkManagerName) {
     case "LobbySceneNetworkManager": {
       registerRoomHandler(
-        socket,
+        ws,
         roomManager,
         new UserInLobby(userObject.id, userObject.name)
       );
       break;
     }
     case "MainSceneNetworkManager": {
-      registerGameHandler(socket, game, userObject.id);
+      registerGameHandler(ws, game, userObject.id);
       break;
     }
     default:
@@ -64,7 +62,7 @@ const onConnection = (socket: Socket) => {
   }
 };
 
-io.on("connection", onConnection);
+wss.on("connection", onConnection);
 
 app.get("/", (request, response) => {
   response.send("connection");

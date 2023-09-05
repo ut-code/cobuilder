@@ -1,14 +1,13 @@
 import * as THREE from "three";
 import * as math from "mathjs";
+import { Vector3, GameData, rotateVector3 } from "shared";
 import {
   GameObject,
   Scene,
   Renderer,
   SceneRenderer,
   CameraRenderer,
-} from "../commons/models";
-import { rotateVector3, Vector3 } from "../utils/vector3";
-import { GameData } from "../NetworkManger";
+} from "../models";
 import upSky from "../../../resources/clouds1_up.png";
 import downSky from "../../../resources/clouds1_down.png";
 import eastSky from "../../../resources/clouds1_east.png";

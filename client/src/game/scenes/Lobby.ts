@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { Scene, SceneRenderer, CameraRenderer } from "../commons/models";
-import { LobbyData } from "../NetworkManger";
+import { LobbyData } from "shared";
+import { Scene, SceneRenderer, CameraRenderer } from "../models";
 import { PointerState } from "../InputManger";
 
 export class Room {

@@ -1,4 +1,5 @@
-import { Scene, SceneRenderer, SceneType, User } from "./commons/models";
+import { User } from "shared";
+import { Scene, SceneRenderer, SceneType } from "./models";
 import { MainSceneRenderer, MainScene } from "./scenes/Main";
 import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
 import InputManager from "./InputManger";

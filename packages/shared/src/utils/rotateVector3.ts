@@ -1,12 +1,10 @@
 import * as math from "mathjs";
+import { Vector3 } from "../gameModels";
 
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
-
-export function rotateVector3(oldVector: Vector3, rotation: Vector3): Vector3 {
+export default function rotateVector3(
+  oldVector: Vector3,
+  rotation: Vector3
+): Vector3 {
   const { x, y, z } = rotation;
   const rotationMatrixX = math.matrix([
     [1, 0, 0],

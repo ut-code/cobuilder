@@ -1,14 +1,15 @@
-import { Socket } from "socket.io";
+import { GameData } from "shared";
+import { WebSocket } from "ws";
 import Game from "../game/game";
-import { Player } from "../game/common/model";
+import { Player } from "../game/model";
 
 export default function gameHandler(
-  socket: Socket,
+  socket: WebSocket,
   game: Game,
   userId: number
 ) {
   setInterval(() => {
-    socket.emit("gameData", {
+    const gameData: GameData = {
       playerStatuses: game.players.map((player) => {
         const { id, HP, score, position, rotation, isDead } = player;
         return {
@@ -28,7 +29,8 @@ export default function gameHandler(
         const { id, position, rotation } = obstacle;
         return { id, position, rotation };
       }),
-    });
+    };
+    socket.emit("gameData", gameData);
   }, 10);
   socket.on("createPlayer", (playerId: number) => {
     game.setPlayer(
