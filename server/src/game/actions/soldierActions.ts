@@ -1,6 +1,6 @@
-import { PlayerAction } from "./commonActions";
-import { Bullet, PLAYER_DEPTH } from "../common/model";
-import { rotateVector3 } from "../utils/vector3";
+import { rotateVector3 } from "shared";
+import { PlayerAction } from "./playerAction";
+import { Bullet, PLAYER_DEPTH } from "../model";
 import Soldier from "../fighters/soldier";
 
 export default class ShootAction implements PlayerAction {

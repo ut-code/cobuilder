@@ -1,4 +1,4 @@
-import { Vector3, rotateVector3 } from "./utils/vector3";
+import { Vector3, rotateVector3 } from "shared";
 
 export const PLAYER_WIDTH = 10;
 export const PLAYER_DEPTH = 10;

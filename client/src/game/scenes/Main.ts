@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import * as math from "mathjs";
-import { Vector3, GameData, rotateVector3 } from "shared";
+import {
+  BulletStatus,
+  ObstacleStatus,
+  PlayerStatus,
+  Vector3,
+  rotateVector3,
+} from "shared";
 import {
   GameObject,
   Scene,
@@ -95,7 +101,11 @@ export class MainScene extends Scene {
     this.bullets.splice(this.bullets.indexOf(bullet), 1);
   }
 
-  updateScene(gameData: GameData) {
+  updateScene(gameData: {
+    playerStatuses: PlayerStatus[];
+    bulletStatuses: BulletStatus[];
+    obstacleStatuses: ObstacleStatus[];
+  }) {
     const { playerStatuses, bulletStatuses } = gameData;
     // player の更新
     for (const playerStatus of playerStatuses) {

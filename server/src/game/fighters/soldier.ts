@@ -1,4 +1,4 @@
-import { Player } from "../common/model";
+import { Player } from "../model";
 
 export default class Soldier extends Player {
   isCoolingDown = false;

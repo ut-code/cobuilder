@@ -1,82 +1,54 @@
-import { Socket as ClientSocket } from "socket.io-client";
-import { Socket as ServerSocket } from "socket.io";
+import { WebSocket as ServerSocket } from "ws";
 import {
-  createPlayer,
-  NewUserData,
-  updateGameData,
-  GameData,
-  LobbyData,
-  TypistData,
-  createRoom,
-  joinRoom,
-  leaveRoom,
-  updateLobbyData,
-  updateKeyboardInputs,
-  KeyboardInputs,
+  ConnectionEventData,
+  CreateUserEventData,
+  CreateRoomEventData,
+  JoinRoomEventData,
+  KeyboardInputsEventData,
+  LeaveRoomEventData,
+  UpdateGameDataEventData,
+  UpdateLobbyDataEventData,
 } from "../schema";
 
 // client -> server
-
-export function emitEventFromClient(
-  socket: ClientSocket,
-  event: typeof createPlayer,
-  typistData: TypistData,
-  keyboardInputs: KeyboardInputs
+export function clientEmitEvent(
+  socket: WebSocket,
+  data: CreateUserEventData
+): void;
+export function clientEmitEvent(
+  socket: WebSocket,
+  data: KeyboardInputsEventData
+): void;
+export function clientEmitEvent(
+  socket: WebSocket,
+  data: CreateRoomEventData
+): void;
+export function clientEmitEvent(
+  socket: WebSocket,
+  data: JoinRoomEventData
+): void;
+export function clientEmitEvent(
+  socket: WebSocket,
+  data: LeaveRoomEventData
+): void;
+export function clientEmitEvent(
+  socket: WebSocket,
+  data: ConnectionEventData
 ): void;
 
-export function emitEventFromClient(
-  socket: ClientSocket,
-  event: typeof createPlayer,
-  userData: NewUserData
-): void;
-
-export function emitEventFromClient(
-  socket: ClientSocket,
-  event: typeof updateKeyboardInputs,
-  keyboardInputs: KeyboardInputs
-): void;
-
-export function emitEventFromClient(
-  socket: ClientSocket,
-  event: typeof createRoom
-): void;
-
-export function emitEventFromClient(
-  socket: ClientSocket,
-  event: typeof joinRoom
-): void;
-
-export function emitEventFromClient(
-  socket: ClientSocket,
-  event: typeof leaveRoom
-): void;
-
-export function emitEventFromClient(
-  socket: ClientSocket,
-  event: string,
-  ...args: unknown[]
-) {
-  socket.emit(event, ...args);
+export function clientEmitEvent(socket: WebSocket, data: unknown) {
+  socket.send(JSON.stringify(data));
 }
 
 // server -> client
-
-export function emitEventFromServer(
-  socket: ServerSocket,
-  event: typeof updateGameData,
-  gameData: GameData
+export function serverEmitEvent(
+  ws: ServerSocket,
+  data: UpdateGameDataEventData
 ): void;
-
-export function emitEventFromServer(
-  socket: ServerSocket,
-  event: typeof updateLobbyData,
-  lobbyData: LobbyData
+export function serverEmitEvent(
+  ws: ServerSocket,
+  data: UpdateLobbyDataEventData
 ): void;
-
-export function emitEventFromServer(
-  socket: ServerSocket,
-  event: string,
-  ...args: unknown[]
-) {
-  socket.emit(event, ...args);
+export function serverEmitEvent(socket: ServerSocket, data: unknown) {
+  socket.send(JSON.stringify(data));
 }

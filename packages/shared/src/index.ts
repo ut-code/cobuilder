@@ -9,13 +9,25 @@ export {
 
 export { default as rotateVector3 } from "./utils/rotateVector3";
 
-export { emitEventFromClient, emitEventFromServer } from "./utils/emitEvent";
+export { clientEmitEvent, serverEmitEvent } from "./utils/emitEvent";
+
+export { clientOnEvent, serverOnEvent } from "./utils/onEvent";
 
 export {
-  GameData,
-  LobbyData,
   NewUserData,
   TypistData,
+  GameData,
+  LobbyData,
+  ConnectionEventData,
+  CreateUserEventData,
+  KeyboardInputsEventData,
+  CreateRoomEventData,
+  JoinRoomEventData,
+  LeaveRoomEventData,
+  UpdateGameDataEventData,
+  UpdateLobbyDataEventData,
+  ClientEventData,
+  ServerEventData,
   updateGameData,
   updateLobbyData,
   createPlayer,

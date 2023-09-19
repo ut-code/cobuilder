@@ -1,18 +1,9 @@
 import {
   User,
-  PlayerStatus,
-  BulletStatus,
-  ObstacleStatus,
+  clientEmitEvent,
   GameData,
-  updateGameData,
-  updateLobbyData,
+  clientOnEvent,
   LobbyData,
-  createRoom,
-  joinRoom,
-  leaveRoom,
-  NewUserData,
-  createPlayer,
-  updateUserKeyboardInputs,
 } from "shared";
 
 const { VITE_SERVER_ORIGIN } = import.meta.env;
@@ -24,14 +15,13 @@ export abstract class NetworkManager {
 
   constructor(user: User) {
     this.user = user;
-    this.socket = new WebSocket(VITE_SERVER_ORIGIN as string);
+    this.socket = new WebSocket("ws://localhost:5000");
     this.socket.onopen = () => {
-      this.socket.send(
-        JSON.stringify({
-          networkManagerName: this.constructor.name,
-          user: JSON.stringify(user),
-        })
-      );
+      clientEmitEvent(this.socket, {
+        event: "connection",
+        networkManagerName: this.constructor.name,
+        userConnecting: this.user,
+      });
     };
   }
 
@@ -42,36 +32,50 @@ export abstract class NetworkManager {
 
 export class LoginSceneNetworkManager extends NetworkManager {
   sendLogin() {
-    this.socket.emit("login", this.user);
+    this.socket.send(JSON.stringify(this.user));
   }
 }
 
 export class MainSceneNetworkManager extends NetworkManager {
   private onGameData: () => void;
 
-  gameData: {
-    playerStatuses: PlayerStatus[];
-    bulletStatuses: BulletStatus[];
-    obstacleStatuses: ObstacleStatus[];
-  } = { playerStatuses: [], bulletStatuses: [], obstacleStatuses: [] };
+  gameData: GameData = {
+    playerStatuses: [],
+    bulletStatuses: [],
+    obstacleStatuses: [],
+  };
 
   constructor(user: User, onGameData: () => void) {
     super(user);
     this.onGameData = onGameData;
-    this.socket.on(updateGameData, (gameData: GameData) => {
-      this.updateGameData(gameData);
-      this.onGameData();
+    clientOnEvent(this.socket, (data) => {
+      switch (data.event) {
+        case "game-data:update": {
+          this.updateGameData(data.gameData as GameData);
+          this.onGameData();
+          break;
+        }
+        default: {
+          throw new Error(`Unexpected event: ${data.event}`);
+        }
+      }
     });
   }
 
   sendCreatePlayer() {
-    const newUserData: NewUserData = this.user;
-    this.socket.emit(createPlayer, newUserData);
+    clientEmitEvent(this.socket, {
+      event: "player:create",
+      newUserData: this.user,
+    });
   }
 
   sendUserKeyboardInputs(inputs: Map<string, boolean>) {
     const data = JSON.stringify(Object.fromEntries(inputs));
-    this.socket.emit(updateUserKeyboardInputs, this.user, data);
+    clientEmitEvent(this.socket, {
+      event: "keyboard-inputs:update",
+      typistData: this.user,
+      keyboardInputs: data,
+    });
   }
 
   private updateGameData(gameData: GameData) {
@@ -87,22 +91,30 @@ export class LobbySceneNetworkManager extends NetworkManager {
   constructor(user: User, onLobbyData: () => void) {
     super(user);
     this.onLobbyData = onLobbyData;
-    this.socket.on(updateLobbyData, (lobbyData: LobbyData) => {
-      this.updateLobbyData(lobbyData);
-      this.onLobbyData();
+    clientOnEvent(this.socket, (data) => {
+      switch (data.event) {
+        case "lobby-data:update": {
+          this.updateLobbyData(data.lobbyData);
+          this.onLobbyData();
+          break;
+        }
+        default: {
+          throw new Error(`Unexpected event: ${data.event}`);
+        }
+      }
     });
   }
 
   sendCreateRoom() {
-    this.socket.emit(createRoom);
+    clientEmitEvent(this.socket, { event: "room:create" });
   }
 
   sendJoinRoom() {
-    this.socket.emit(joinRoom);
+    clientEmitEvent(this.socket, { event: "room:join" });
   }
 
   sendLeaveRoom() {
-    this.socket.emit(leaveRoom);
+    clientEmitEvent(this.socket, { event: "room:leave" });
   }
 
   private updateLobbyData(lobbyData: LobbyData) {

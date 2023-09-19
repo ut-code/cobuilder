@@ -1,9 +1,9 @@
 import cors from "cors";
 import express from "express";
 import http from "http";
-import url from "url";
 import { WebSocketServer, WebSocket } from "ws";
 import * as dotenv from "dotenv";
+import { ClientEventData } from "shared";
 import Game from "./game/game";
 import registerGameHandler from "./event-handlers/gameHandler";
 import registerRoomHandler from "./event-handlers/roomHandler";
@@ -22,7 +22,7 @@ app.use(cors({ origin: [WEB_ORIGIN as string] }));
 
 app.use(express.json());
 
-const wss = new WebSocketServer({ server, path: WEB_ORIGIN as string });
+const wss = new WebSocketServer({ server });
 
 export interface User {
   id: number;
@@ -40,26 +40,30 @@ setInterval(() => {
   game.updatePlayersIsDead();
 }, 10);
 
-const onConnection = (ws: WebSocket, request: http.IncomingMessage) => {
-  const queryParameters = url.parse(request.url as string, true).query;
-  const { networkManagerName, user } = queryParameters;
-  const userObject = JSON.parse(user as string) as User;
-  switch (networkManagerName) {
-    case "LobbySceneNetworkManager": {
-      registerRoomHandler(
-        ws,
-        roomManager,
-        new UserInLobby(userObject.id, userObject.name)
-      );
-      break;
+const onConnection = (socket: WebSocket) => {
+  socket.on("message", (stream) => {
+    const data = JSON.parse(stream.toString()) as ClientEventData;
+    // 初回のイベントはconnectionである必要がある
+    if (data.event === "connection") {
+      const user = data.userConnecting;
+      switch (data.networkManagerName) {
+        case "LobbySceneNetworkManager": {
+          registerRoomHandler(
+            socket,
+            roomManager,
+            new UserInLobby(user.id, user.name)
+          );
+          break;
+        }
+        case "MainSceneNetworkManager": {
+          registerGameHandler(socket, game, user.id);
+          break;
+        }
+        default:
+          throw new Error(`Unexpected name: ${data.networkManagerName}`);
+      }
     }
-    case "MainSceneNetworkManager": {
-      registerGameHandler(ws, game, userObject.id);
-      break;
-    }
-    default:
-      throw new Error(`Unexpected name: ${networkManagerName}`);
-  }
+  });
 };
 
 wss.on("connection", onConnection);
