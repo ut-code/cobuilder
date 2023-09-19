@@ -13,15 +13,15 @@ import {
   Renderer,
   SceneRenderer,
   CameraRenderer,
-} from "../models";
-import upSky from "../../../resources/clouds1_up.png";
-import downSky from "../../../resources/clouds1_down.png";
-import eastSky from "../../../resources/clouds1_east.png";
-import westSky from "../../../resources/clouds1_west.png";
-import southSky from "../../../resources/clouds1_south.png";
-import northSky from "../../../resources/clouds1_north.png";
-import dryGround from "../../../resources/ground.png";
-import brick from "../../../resources/brick_wall-red.png";
+} from "../../models";
+import upSky from "../../../../resources/clouds1_up.png";
+import downSky from "../../../../resources/clouds1_down.png";
+import eastSky from "../../../../resources/clouds1_east.png";
+import westSky from "../../../../resources/clouds1_west.png";
+import southSky from "../../../../resources/clouds1_south.png";
+import northSky from "../../../../resources/clouds1_north.png";
+import dryGround from "../../../../resources/ground.png";
+import brick from "../../../../resources/brick_wall-red.png";
 
 const STAGE_WIDTH = 800;
 

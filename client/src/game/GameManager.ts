@@ -1,15 +1,12 @@
 import { User } from "shared";
-import { Scene, SceneRenderer, SceneType } from "./models";
-import { MainSceneRenderer, MainScene } from "./scenes/Main";
-import { LoginSceneRenderer, LoginScene } from "./scenes/Login";
+import { Scene, SceneRenderer, SceneType, NetworkManager } from "./models";
+import { MainSceneRenderer, MainScene } from "./scenes/main/scene";
+import { LoginSceneRenderer, LoginScene } from "./scenes/login/scene";
+import { LobbyScene, LobbySceneRenderer } from "./scenes/lobby/scene";
 import InputManager from "./InputManger";
-import {
-  NetworkManager,
-  MainSceneNetworkManager,
-  LobbySceneNetworkManager,
-  LoginSceneNetworkManager,
-} from "./NetworkManger";
-import { LobbyScene, LobbySceneRenderer } from "./scenes/Lobby";
+import LoginSceneNetworkManager from "./scenes/login/network";
+import MainSceneNetworkManager from "./scenes/main/network";
+import LobbySceneNetworkManager from "./scenes/lobby/network";
 
 export default class GameManager {
   user: User = { id: 0, name: "" };
@@ -37,7 +34,7 @@ export default class GameManager {
     );
     this.inputManager = new InputManager(this.canvas);
     this.networkManager = new LoginSceneNetworkManager(this.user);
-    this.switchScene("lobby");
+    this.switchScene("main");
   }
 
   switchScene(sceneType: SceneType) {
@@ -50,14 +47,19 @@ export default class GameManager {
           this.switchScene("lobby");
         });
         this.scene = newMainScene;
-        const newNetworkManager = new MainSceneNetworkManager(this.user, () => {
-          newMainScene.updateScene(newNetworkManager.gameData);
-        });
+        const newNetworkManager = new MainSceneNetworkManager(
+          this.user,
+          () => {
+            newMainScene.updateScene(newNetworkManager.gameData);
+          },
+          () => {
+            newNetworkManager.sendCreatePlayer();
+          }
+        );
         this.networkManager = newNetworkManager;
         this.inputManager = new InputManager(this.canvas, () => {
           newNetworkManager.sendUserKeyboardInputs(this.inputManager.keyStates);
         });
-        newNetworkManager.sendCreatePlayer();
         this.sceneRenderer = new MainSceneRenderer(newMainScene, this.canvas);
         break;
       }

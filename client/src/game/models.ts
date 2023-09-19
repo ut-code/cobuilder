@@ -1,17 +1,13 @@
 import * as THREE from "three";
 
-import { Vector3 } from "shared";
+import { User, Vector3, clientEmitEvent } from "shared";
+
+const { VITE_SERVER_WS_ORIGIN } = import.meta.env;
 
 export type SceneType = "login" | "main" | "lobby";
 
 export abstract class Scene {
   onSceneDestroyed?(): void;
-}
-
-export interface User {
-  id: number;
-
-  name: string;
 }
 
 export interface GameObject {
@@ -79,5 +75,27 @@ export class SceneRenderer implements Renderer {
   destroy(): void {
     this.cameraRenderer.destroy();
     this.webGLRenderer.dispose();
+  }
+}
+
+export abstract class NetworkManager {
+  user: User;
+
+  protected socket: WebSocket;
+
+  constructor(user: User) {
+    this.user = user;
+    this.socket = new WebSocket(VITE_SERVER_WS_ORIGIN as string);
+    this.socket.onopen = () => {
+      clientEmitEvent(this.socket, {
+        event: "connection",
+        networkManagerName: this.constructor.name,
+        userConnecting: this.user,
+      });
+    };
+  }
+
+  destroy() {
+    this.socket.close();
   }
 }

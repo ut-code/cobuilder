@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { LobbyData } from "shared";
-import { Scene, SceneRenderer, CameraRenderer } from "../models";
-import { PointerState } from "../InputManger";
+import { Scene, SceneRenderer, CameraRenderer } from "../../models";
+import { PointerState } from "../../InputManger";
 
 export class Room {
   id: number;
