@@ -1,10 +1,23 @@
 import * as THREE from "three";
 import { CameraRenderer, Scene, SceneRenderer } from "../commons/models";
+import { PointerState } from "../InputManger";
 
 export class LoginScene extends Scene {
+  pointerState: PointerState = { x: 0, y: 0, isPointerDown: false };
+
   constructor(onSceneDestroyed: () => void) {
     super();
     this.onSceneDestroyed = onSceneDestroyed;
+  }
+
+  destroy(): void {
+    this.onSceneDestroyed?.();
+  }
+
+  updatePointerState(pointerState: PointerState) {
+    this.pointerState.x = pointerState.x;
+    this.pointerState.y = pointerState.y;
+    this.pointerState.isPointerDown = pointerState.isPointerDown;
   }
 }
 
