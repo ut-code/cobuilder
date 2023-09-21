@@ -76,15 +76,6 @@ export class LoginSceneRenderer extends SceneRenderer {
     this.pointer.set(x, y);
   }
 
-  handleStartButtonClick() {
-    const intersects = this.rayCaster.intersectObjects<
-      THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>
-    >([this.startButton]);
-    for (const intersect of intersects) {
-      intersect.object.material.color.set(0x00ff00);
-    }
-  }
-
   render(): void {
     // クリック判定
     const { x, y } = this.scene.pointerState;
