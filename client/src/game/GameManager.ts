@@ -4,7 +4,6 @@ import { MainSceneRenderer, MainScene } from "./scenes/main/scene";
 import { LoginSceneRenderer, LoginScene } from "./scenes/login/scene";
 import { LobbyScene, LobbySceneRenderer } from "./scenes/lobby/scene";
 import InputManager from "./InputManger";
-import LoginSceneNetworkManager from "./scenes/login/network";
 import MainSceneNetworkManager from "./scenes/main/network";
 import LobbySceneNetworkManager from "./scenes/lobby/network";
 
@@ -13,34 +12,22 @@ export default class GameManager {
 
   canvas: HTMLCanvasElement;
 
-  private scene: Scene;
+  private scene!: Scene;
 
-  private sceneRenderer: SceneRenderer;
+  private sceneRenderer!: SceneRenderer;
 
-  private inputManager: InputManager;
+  private inputManager!: InputManager;
 
-  private networkManager: NetworkManager;
+  private networkManager!: NetworkManager;
 
   constructor(canvas: HTMLCanvasElement) {
     this.user.id = Math.random();
     this.user.name = "userName";
     this.canvas = canvas;
-    this.scene = new LoginScene(() => {
-      this.switchScene("lobby");
-    });
-    this.sceneRenderer = new LoginSceneRenderer(
-      this.scene as LoginScene,
-      canvas
-    );
-    this.inputManager = new InputManager(this.canvas);
-    this.networkManager = new LoginSceneNetworkManager(this.user);
-    this.switchScene("main");
+    this.createScene("main");
   }
 
-  switchScene(sceneType: SceneType) {
-    this.sceneRenderer.destroy();
-    this.inputManager.destroy();
-    this.networkManager.destroy();
+  private createScene(sceneType: SceneType) {
     switch (sceneType) {
       case "main": {
         const newMainScene = new MainScene(this.user.id, () => {
@@ -100,6 +87,13 @@ export default class GameManager {
       default:
         throw new Error("scene not found");
     }
+  }
+
+  private switchScene(sceneType: SceneType) {
+    this.sceneRenderer.destroy();
+    this.inputManager.destroy();
+    this.networkManager.destroy();
+    this.createScene(sceneType);
   }
 
   run() {

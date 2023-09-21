@@ -85,14 +85,14 @@ export abstract class NetworkManager {
 
   constructor(user: User) {
     this.user = user;
-    this.socket = new WebSocket(VITE_SERVER_WS_ORIGIN as string);
-    this.socket.onopen = () => {
+    this.socket = new WebSocket(VITE_SERVER_WS_ORIGIN);
+    this.socket.addEventListener("open", () => {
       clientEmitEvent(this.socket, {
         event: "connection",
         networkManagerName: this.constructor.name,
         userConnecting: this.user,
       });
-    };
+    });
   }
 
   destroy() {
