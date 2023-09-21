@@ -36,7 +36,7 @@ export class LoginSceneRenderer extends SceneRenderer {
 
   pointer: THREE.Vector2;
 
-  startButton: THREE.Mesh;
+  loginButton: LoginButton;
 
   constructor(scene: LoginScene, canvas: HTMLCanvasElement) {
     super(scene, canvas);
