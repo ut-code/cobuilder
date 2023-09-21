@@ -63,10 +63,13 @@ export class LoginSceneRenderer extends SceneRenderer {
     this.rayCaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     this.rayCaster.setFromCamera(this.pointer, this.cameraRenderer.Camera);
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    this.startButton = new THREE.Mesh(geometry, material);
-    this.threeScene.add(this.startButton);
+    this.loginButton = new LoginButton(
+      "../../../resources/login.png",
+      new THREE.Vector3(4, 2, 2),
+      new THREE.Vector3(1.5, 1.5, 0)
+    );
+    this.loginButton.name = "loginButton";
+    this.threeScene.add(this.loginButton);
   }
 
   setPointer(x: number, y: number) {
