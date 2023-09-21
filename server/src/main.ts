@@ -8,6 +8,7 @@ import Game from "./game/game";
 import registerGameHandler from "./event-handlers/gameHandler";
 import registerRoomHandler from "./event-handlers/roomHandler";
 import { RoomManager, UserInLobby } from "./roomManager";
+import indexRouter from "./routes/index";
 
 dotenv.config();
 
@@ -68,9 +69,7 @@ const onConnection = (socket: WebSocket) => {
 
 wss.on("connection", onConnection);
 
-app.get("/", (request, response) => {
-  response.send("connection");
-});
+app.use("/", indexRouter);
 
 server.listen(5000, () => {
   // eslint-disable-next-line no-console
