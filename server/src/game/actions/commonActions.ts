@@ -1,13 +1,6 @@
-import { Vector3 } from "../utils/vector3";
-import { Player, PLAYER_HEIGHT } from "../common/model";
-
-export interface PlayerAction {
-  actor: Player;
-
-  isCompleted: boolean;
-
-  tick(delta: number): void;
-}
+import { Vector3 } from "shared";
+import { Player, PLAYER_HEIGHT } from "../model";
+import { PlayerAction } from "./playerAction";
 
 export class MoveAction implements PlayerAction {
   actor: Player;

@@ -1,22 +1,27 @@
 import * as THREE from "three";
 import * as math from "mathjs";
 import {
+  BulletStatus,
+  ObstacleStatus,
+  PlayerStatus,
+  Vector3,
+  rotateVector3,
+} from "shared";
+import {
   GameObject,
   Scene,
   Renderer,
   SceneRenderer,
   CameraRenderer,
-} from "../commons/models";
-import { rotateVector3, Vector3 } from "../utils/vector3";
-import { GameData } from "../NetworkManger";
-import upSky from "../../../resources/clouds1_up.png";
-import downSky from "../../../resources/clouds1_down.png";
-import eastSky from "../../../resources/clouds1_east.png";
-import westSky from "../../../resources/clouds1_west.png";
-import southSky from "../../../resources/clouds1_south.png";
-import northSky from "../../../resources/clouds1_north.png";
-import dryGround from "../../../resources/ground.png";
-import brick from "../../../resources/brick_wall-red.png";
+} from "../../models";
+import upSky from "../../../../resources/clouds1_up.png";
+import downSky from "../../../../resources/clouds1_down.png";
+import eastSky from "../../../../resources/clouds1_east.png";
+import westSky from "../../../../resources/clouds1_west.png";
+import southSky from "../../../../resources/clouds1_south.png";
+import northSky from "../../../../resources/clouds1_north.png";
+import dryGround from "../../../../resources/ground.png";
+import brick from "../../../../resources/brick_wall-red.png";
 
 const STAGE_WIDTH = 800;
 
@@ -96,7 +101,11 @@ export class MainScene extends Scene {
     this.bullets.splice(this.bullets.indexOf(bullet), 1);
   }
 
-  updateScene(gameData: GameData) {
+  updateScene(gameData: {
+    playerStatuses: PlayerStatus[];
+    bulletStatuses: BulletStatus[];
+    obstacleStatuses: ObstacleStatus[];
+  }) {
     const { playerStatuses, bulletStatuses } = gameData;
     // player の更新
     for (const playerStatus of playerStatuses) {

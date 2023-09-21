@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { CameraRenderer, Scene, SceneRenderer } from "../commons/models";
+import { CameraRenderer, Scene, SceneRenderer } from "../../models";
 
 export class LoginScene extends Scene {
   constructor(onSceneDestroyed: () => void) {
