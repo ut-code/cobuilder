@@ -23,7 +23,21 @@ export class LoginScene extends Scene {
 
 class LoginSceneCameraRenderer extends CameraRenderer {
   render(): void {
-    this.camera.position.set(0, 10, 0);
+  }
+}
+
+export class LoginButton extends THREE.Sprite {
+  constructor(
+    texturePath: string,
+    scale: THREE.Vector3,
+    position: THREE.Vector3
+  ) {
+    const texture = new THREE.TextureLoader().load(texturePath);
+    const material = new THREE.SpriteMaterial({ map: texture });
+    super(material);
+    this.scale.set(scale.x, scale.y, scale.z);
+    this.position.set(position.x, position.y, position.z);
+    this.name = "loginButton";
   }
 }
 
