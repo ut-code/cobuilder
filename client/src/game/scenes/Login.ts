@@ -55,6 +55,17 @@ export class LoginSceneRenderer extends SceneRenderer {
   }
 
   render(): void {
+    // クリック判定
+    const { x, y } = this.scene.pointerState;
+    const pointer = new THREE.Vector2(x, y);
+    this.rayCaster.setFromCamera(pointer, this.cameraRenderer.Camera);
+
+    const intersects = this.rayCaster.intersectObject(this.loginButton);
+    if (intersects.length > 0) {
+      if (this.scene.pointerState.isPointerDown) {
+        console.log("login");
+      }
+    }
     this.cameraRenderer.render();
     this.webGLRenderer.render(this.threeScene, this.cameraRenderer.Camera);
   }
