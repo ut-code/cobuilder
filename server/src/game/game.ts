@@ -1,5 +1,5 @@
 import * as math from "mathjs";
-import { rotateVector3 } from "./utils/vector3";
+import { rotateVector3 } from "shared";
 import {
   GameObject,
   Player,
@@ -8,13 +8,9 @@ import {
   PLAYER_HEIGHT,
   PLAYER_WIDTH,
   STAGE_WIDTH,
-} from "./common/model";
-import {
-  PlayerAction,
-  MoveAction,
-  RotateAction,
-  JumpAction,
-} from "./actions/commonActions";
+} from "./model";
+import { PlayerAction } from "./actions/playerAction";
+import { MoveAction, RotateAction, JumpAction } from "./actions/commonActions";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const sensitivity = 3;
