@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { CameraRenderer, Scene, SceneRenderer } from "../commons/models";
-import { PointerState } from "../InputManger";
+import { CameraRenderer, Scene, SceneRenderer } from "../../models";
+import { PointerState } from "../../InputManger";
 
 export class LoginScene extends Scene {
   pointerState: PointerState = { x: 0, y: 0, isPointerDown: false };
