@@ -68,6 +68,11 @@ export default class GameManager {
           this.scene as LoginScene,
           this.canvas
         );
+        this.inputManager = new InputManager(this.canvas, () => {
+          (this.scene as LoginScene).updatePointerState(
+            this.inputManager.pointerState
+          );
+        });
         break;
       }
       case "lobby": {
