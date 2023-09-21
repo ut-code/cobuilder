@@ -23,6 +23,7 @@ export class LoginScene extends Scene {
 
 class LoginSceneCameraRenderer extends CameraRenderer {
   render(): void {
+    this.camera.position.set(2, 2, 10);
   }
 }
 
