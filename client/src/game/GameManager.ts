@@ -2,6 +2,7 @@ import { User } from "shared";
 import { Scene, SceneRenderer, SceneType, NetworkManager } from "./models";
 import { MainSceneRenderer, MainScene } from "./scenes/main/scene";
 import { LoginSceneRenderer, LoginScene } from "./scenes/login/scene";
+import { SelectSceneRenderer, SelectScene } from "./scenes/mode_select/scene";
 import { LobbyScene, LobbySceneRenderer } from "./scenes/lobby/scene";
 import InputManager from "./InputManger";
 import MainSceneNetworkManager from "./scenes/main/network";
@@ -24,7 +25,7 @@ export default class GameManager {
     this.user.id = Math.random();
     this.user.name = "userName";
     this.canvas = canvas;
-    this.createScene("main");
+    this.createScene("mode_select");//ここを変える
   }
 
   private createScene(sceneType: SceneType) {
@@ -86,6 +87,30 @@ export default class GameManager {
         );
         this.inputManager = new InputManager(this.canvas, () => {
           newLobbyScene.updatePointerState(this.inputManager.pointerState);
+        });
+        break;
+      }
+      case "mode_select": {
+        const newSelectScene = new SelectScene(() => {
+          this.switchScene("main");
+        });
+        this.scene = newSelectScene;
+        const newNetworkManager = new LobbySceneNetworkManager(
+          this.user,
+          () => {
+            // newSelectScene.updateScene(newNetworkManager.lobbyData);
+          }
+        );
+        this.networkManager = newNetworkManager;
+        this.sceneRenderer = new SelectSceneRenderer(
+          this.scene as LobbyScene,
+          this.canvas,
+          () => {
+            newNetworkManager.sendCreateRoom();
+          }
+        );
+        this.inputManager = new InputManager(this.canvas, () => {
+          newSelectScene.updatePointerState(this.inputManager.pointerState);
         });
         break;
       }
