@@ -17,6 +17,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: latest
+      - name: root package install
+        run: npm ci
       - name: shared package install && build 
         run: cd packages/shared && npm ci && npm run build
       - name: client package install && build
