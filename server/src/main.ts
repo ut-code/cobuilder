@@ -3,7 +3,7 @@ import express from "express";
 import http from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import * as dotenv from "dotenv";
-import { ClientEventData } from "shared";
+import { serverOnEvent } from "shared";
 import Game from "./game/game";
 import registerGameHandler from "./event-handlers/gameHandler";
 import registerRoomHandler from "./event-handlers/roomHandler";
@@ -42,8 +42,7 @@ setInterval(() => {
 }, 10);
 
 const onConnection = (socket: WebSocket) => {
-  socket.on("message", (stream) => {
-    const data = JSON.parse(stream.toString()) as ClientEventData;
+  serverOnEvent(socket, "message", (data) => {
     // 初回のイベントはconnectionである必要がある
     if (data.event === "connection") {
       const user = data.userConnecting;
