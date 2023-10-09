@@ -4,7 +4,7 @@ import { User, Vector3, clientEmitEvent } from "shared";
 
 const { VITE_SERVER_WS_ORIGIN } = import.meta.env;
 
-export type SceneType = "login" | "main" | "lobby";
+export type SceneType = "login" | "main" | "lobby"|"mode_select";
 
 export abstract class Scene {
   onSceneDestroyed?(): void;
