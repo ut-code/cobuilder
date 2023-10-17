@@ -27,8 +27,8 @@ export default class LobbySceneNetworkManager extends NetworkManager {
     clientEmitEvent(this.socket, { event: "room:create" });
   }
 
-  sendJoinRoom() {
-    clientEmitEvent(this.socket, { event: "room:join" });
+  sendJoinRoom(roomId: number) {
+    clientEmitEvent(this.socket, { event: "room:join", roomId });
   }
 
   sendLeaveRoom() {

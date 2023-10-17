@@ -24,7 +24,7 @@ export default class GameManager {
     this.user.id = Math.random();
     this.user.name = "userName";
     this.canvas = canvas;
-    this.createScene("main");
+    this.createScene("lobby");
   }
 
   private createScene(sceneType: SceneType) {
@@ -80,8 +80,13 @@ export default class GameManager {
         this.sceneRenderer = new LobbySceneRenderer(
           this.scene as LobbyScene,
           this.canvas,
-          () => {
-            newNetworkManager.sendCreateRoom();
+          {
+            onAddButtonClick: () => {
+              newNetworkManager.sendCreateRoom();
+            },
+            onJoinButtonClick: (roomId: number) => {
+              newNetworkManager.sendJoinRoom(roomId);
+            },
           }
         );
         this.inputManager = new InputManager(this.canvas, () => {

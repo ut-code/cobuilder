@@ -4,7 +4,6 @@ import http from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import * as dotenv from "dotenv";
 import { serverOnEvent } from "shared";
-import Game from "./game/game";
 import registerGameHandler from "./event-handlers/gameHandler";
 import registerRoomHandler from "./event-handlers/roomHandler";
 import { RoomManager, UserInLobby } from "./roomManager";
@@ -17,7 +16,6 @@ const server = http.createServer(app);
 const { WEB_ORIGIN } = process.env;
 
 const roomManager = new RoomManager();
-const game = new Game();
 
 app.use(cors({ origin: [WEB_ORIGIN as string] }));
 
@@ -29,17 +27,6 @@ export interface User {
   id: number;
   name: string;
 }
-
-let currentTime = Date.now();
-setInterval(() => {
-  const previousTime = currentTime;
-  currentTime = Date.now();
-  game.createPlayerActions();
-  game.runPlayerActions(currentTime - previousTime);
-  game.moveBullets();
-  game.detectCollision();
-  game.updatePlayersIsDead();
-}, 10);
 
 const onConnection = (socket: WebSocket) => {
   serverOnEvent(socket, "message", (data) => {
@@ -56,6 +43,8 @@ const onConnection = (socket: WebSocket) => {
           break;
         }
         case "MainSceneNetworkManager": {
+          const game = roomManager.getGameByUserId(user.id);
+          if (!game) throw new Error();
           registerGameHandler(socket, game, user.id);
           break;
         }

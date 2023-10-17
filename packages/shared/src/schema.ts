@@ -46,6 +46,7 @@ export type CreateRoomEventData = {
 };
 export type JoinRoomEventData = {
   event: typeof joinRoom;
+  roomId: number;
 };
 export type LeaveRoomEventData = {
   event: typeof leaveRoom;

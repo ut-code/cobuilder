@@ -34,7 +34,11 @@ export default function roomHandler(
         break;
       }
       case "room:join": {
-        console.log("room:join");
+        const userInLobby = roomManager.getUser(user.id);
+        if (userInLobby && !userInLobby.isWaiting) {
+          roomManager.joinRoom(data.roomId, userInLobby);
+          userInLobby.isWaiting = true;
+        }
         break;
       }
       default: {

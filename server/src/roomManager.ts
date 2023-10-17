@@ -1,3 +1,5 @@
+import Game from "./game/game";
+
 export class UserInLobby {
   id: number;
 
@@ -17,6 +19,10 @@ export class Room {
   name: string;
 
   users: UserInLobby[] = [];
+
+  limit = 2;
+
+  game?: Game;
 
   constructor(id: number, name: string, user: UserInLobby) {
     this.id = id;
@@ -44,6 +50,10 @@ export class RoomManager {
     this.usersInLobby.splice(this.usersInLobby.indexOf(user), 1);
   }
 
+  getRoom(roomId: number) {
+    return this.rooms.find((one) => one.id === roomId);
+  }
+
   createRoom(name: string, user: UserInLobby) {
     const room = new Room(Math.random(), name, user);
     this.rooms.push(room);
@@ -54,12 +64,22 @@ export class RoomManager {
     const room = this.rooms.find((one) => one.id === roomId);
     if (!room) throw new Error();
     room.users.push(user);
-    return room;
+    if (room.users.length === room.limit) {
+      room.game = new Game();
+    }
   }
 
   deleteRoom(roomId: number) {
     const room = this.rooms.find((one) => one.id === roomId);
     if (!room) throw new Error();
     this.rooms.splice(this.rooms.indexOf(room), 1);
+  }
+
+  getGameByUserId(userId: number) {
+    const room = this.rooms.find((one) =>
+      one.users.some((user) => user.id === userId)
+    );
+    if (!room) throw new Error();
+    return room.game;
   }
 }
