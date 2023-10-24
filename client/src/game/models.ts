@@ -89,10 +89,13 @@ export abstract class NetworkManager {
     this.socket.addEventListener("open", () => {
       clientEmitEvent(this.socket, {
         event: "connection",
-        networkManagerName: this.constructor.name,
         userConnecting: this.user,
       });
     });
+  }
+
+  checkIsSocketOpen() {
+    return this.socket.readyState === WebSocket.OPEN;
   }
 
   destroy() {

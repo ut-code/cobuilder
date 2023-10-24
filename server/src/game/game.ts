@@ -28,6 +28,10 @@ export default class Game {
 
   userInputs: Map<Player, Record<string, boolean>> = new Map();
 
+  constructor() {
+    this.run();
+  }
+
   getPlayer(id: number) {
     return this.players.find((player) => player.id === id);
   }
@@ -182,5 +186,18 @@ export default class Game {
       }
     }
     return { x, y, z: 5 };
+  }
+
+  run() {
+    let currentTime = Date.now();
+    setInterval(() => {
+      const previousTime = currentTime;
+      currentTime = Date.now();
+      this.createPlayerActions();
+      this.runPlayerActions(currentTime - previousTime);
+      this.moveBullets();
+      this.detectCollision();
+      this.updatePlayersIsDead();
+    }, 10);
   }
 }

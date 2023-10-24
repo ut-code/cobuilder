@@ -1,7 +1,9 @@
 import * as THREE from "three";
-import { LobbyData } from "shared";
+import { LobbyData, Vector3 } from "shared";
 import { Scene, SceneRenderer, CameraRenderer } from "../../models";
 import { PointerState } from "../../InputManger";
+import joinButtonImage from "../../../../resources/join.png";
+import createRoomButtonImage from "../../../../resources/create-room.png";
 
 export class Room {
   id: number;
@@ -72,114 +74,152 @@ class LobbySceneCameraRenderer extends CameraRenderer {
 }
 
 abstract class UI {
-  sprite: THREE.Sprite;
+  object: THREE.Object3D = new THREE.Object3D();
 
   protected threeScene: THREE.Scene;
 
   constructor(threeScene: THREE.Scene) {
     this.threeScene = threeScene;
-    this.sprite = new THREE.Sprite();
+  }
+
+  destroy(): void {
+    this.threeScene.remove(this.object);
   }
 }
 
 class Button extends UI {
-  constructor(threeScene: THREE.Scene) {
-    super(threeScene);
-    // sprite 作成
-    const magnifiedWidth = 4000;
-    const magnifiedHeight = 4000;
-    const canvasForText = document.createElement("canvas");
-    canvasForText.width = magnifiedWidth;
-    canvasForText.height = magnifiedHeight;
-    const ctx = canvasForText.getContext("2d");
-    if (!ctx) throw new Error();
-    ctx.fillStyle = "green";
-    ctx.fillRect(0, 0, magnifiedHeight, magnifiedWidth);
-    ctx.fillStyle = "black";
-    ctx.font = `${magnifiedWidth / 2}px Arial`;
-    const text = "+";
-    ctx.fillText(
-      text,
-      (magnifiedWidth - ctx.measureText(text).width) / 2,
-      magnifiedHeight / 2 + ctx.measureText(text).actualBoundingBoxAscent / 2
-    );
-    const canvasTexture = new THREE.CanvasTexture(canvasForText);
-    const spriteMaterial = new THREE.SpriteMaterial({ map: canvasTexture });
-    const sprite = new THREE.Sprite(spriteMaterial);
-    this.sprite = sprite;
-    threeScene.add(sprite);
-  }
+  object: THREE.Sprite;
 
-  destroy(): void {
-    this.threeScene.remove(this.sprite);
-  }
-}
+  onClick: () => void;
 
-class MatchRow extends UI {
-  constructor(threeScene: THREE.Scene) {
+  constructor(
+    threeScene: THREE.Scene,
+    onClick: () => void,
+    sprite: THREE.Sprite,
+    position?: Vector3,
+    scale?: Vector3
+  ) {
     super(threeScene);
-    const canvasForText = document.createElement("canvas");
-    const ctx = canvasForText.getContext("2d");
-    ctx!.fillStyle = "green";
-    ctx!.fillRect(0, 0, 10000, 10000);
-    const canvasTexture = new THREE.CanvasTexture(canvasForText);
-    const spriteMaterial = new THREE.SpriteMaterial({ map: canvasTexture });
-    const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.scale.set(3, 1, 1);
-    this.sprite = sprite;
-    threeScene.add(sprite);
+    this.onClick = onClick;
+    const buttonSprite = sprite;
+    this.object = buttonSprite;
+    threeScene.add(buttonSprite);
+    if (position) {
+      const { x, y, z } = position;
+      this.setPosition(x, y, z);
+    }
+    if (scale) {
+      const { x: scaleX, y: scaleY, z: scaleZ } = scale;
+      this.setScale(scaleX, scaleY, scaleZ);
+    }
   }
 
   setPosition(x: number, y: number, z: number) {
-    this.sprite.position.set(x, y, z);
+    this.object.position.set(x, y, z);
   }
 
-  destroy(): void {
-    this.threeScene.remove(this.sprite);
+  setScale(x: number, y: number, z: number) {
+    this.object.scale.set(x, y, z);
   }
 }
+
+class RoomRenderer extends UI {
+  object: THREE.Group;
+
+  room: Room;
+
+  button: Button;
+
+  constructor(threeScene: THREE.Scene, room: Room, button: Button) {
+    super(threeScene);
+    this.object = new THREE.Group();
+    this.room = room;
+    this.button = button;
+    this.object.add(button.object);
+    this.threeScene.add(this.object);
+  }
+
+  setPosition(x: number, y: number, z: number) {
+    this.object.position.set(x, y, z);
+  }
+
+  setScale(x: number, y: number, z: number) {
+    this.object.scale.set(x, y, z);
+  }
+}
+
+type OnButtonClicks = {
+  onAddButtonClick: () => void;
+  onJoinButtonClick: (roomId: number) => void;
+};
 
 export class LobbySceneRenderer extends SceneRenderer {
   protected scene: LobbyScene;
 
   protected cameraRenderer: LobbySceneCameraRenderer;
 
-  private matchRowRenderers: Map<Room, MatchRow> = new Map();
-
   private raycaster = new THREE.Raycaster();
 
-  private addButton: Button;
+  private buttons = new Set<Button>();
 
-  onAddButtonClick: () => void;
+  private roomRenderers = new Map<Room, RoomRenderer>();
+
+  private onButtonClicks: OnButtonClicks;
 
   constructor(
     scene: LobbyScene,
     canvas: HTMLCanvasElement,
-    onAddButtonClick: () => void
+    onButtonClicks: OnButtonClicks
   ) {
     super(scene, canvas);
+    this.threeScene.background = new THREE.Color(0xffffff);
     this.scene = scene;
-    this.onAddButtonClick = onAddButtonClick;
     this.cameraRenderer = new LobbySceneCameraRenderer(
       canvas.width / canvas.height,
       this.threeScene
     );
+    this.onButtonClicks = onButtonClicks;
     if (!this.scene.onSceneDestroyed) throw new Error();
     // + ボタン作成
-    const addButton = new Button(this.threeScene);
-    this.addButton = addButton;
+    const createButtonSprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: new THREE.TextureLoader().load(createRoomButtonImage),
+      })
+    );
+    createButtonSprite.scale.set(4.44, 1.01, 1);
+    const createRoomButton = new Button(
+      this.threeScene,
+      onButtonClicks.onAddButtonClick,
+      createButtonSprite,
+      { x: 0, y: 0, z: 0 }
+    );
+    this.buttons.add(createRoomButton);
   }
 
   private createRow(room: Room) {
-    const row = new MatchRow(this.threeScene);
-    this.matchRowRenderers.set(room, row);
+    const joinButtonSprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: new THREE.TextureLoader().load(joinButtonImage),
+      })
+    );
+    joinButtonSprite.scale.set(2.25, 1.01, 1);
+    const joinButton = new Button(
+      this.threeScene,
+      () => {
+        this.onButtonClicks.onJoinButtonClick(room.id);
+      },
+      joinButtonSprite
+    );
+    this.buttons.add(joinButton);
+    const row = new RoomRenderer(this.threeScene, room, joinButton);
+    this.roomRenderers.set(room, row);
   }
 
   render(): void {
     // マッチの行を作成
-    const unusedRows = new Set(this.matchRowRenderers.values());
+    const unusedRows = new Set(this.roomRenderers.values());
     for (const room of this.scene.rooms) {
-      const row = this.matchRowRenderers.get(room);
+      const row = this.roomRenderers.get(room);
       if (!row) {
         this.createRow(room);
       } else {
@@ -187,30 +227,38 @@ export class LobbySceneRenderer extends SceneRenderer {
       }
     }
     for (const row of unusedRows) {
-      this.threeScene.remove(row.sprite);
+      this.threeScene.remove(row.object);
     }
-    const rows = Array.from(this.matchRowRenderers.values());
+    // マッチの行を配置
+    const rows = Array.from(this.roomRenderers.values());
     rows.forEach((row, index) => {
       row.setPosition(5, 6 - index, 0);
     });
-    // クリック判定
-    const { x, y } = this.scene.pointerState;
-    const pointer = new THREE.Vector2(x, y);
-    this.raycaster.setFromCamera(pointer, this.cameraRenderer.Camera);
-    const intersects = this.raycaster.intersectObject(this.addButton.sprite);
-    if (intersects.length > 0) {
-      if (this.scene.pointerState.isPointerDown) {
-        this.onAddButtonClick();
-      }
-    }
+    this.detectClick();
     this.cameraRenderer.render();
     super.render();
   }
 
+  detectClick() {
+    const { x, y } = this.scene.pointerState;
+    const pointer = new THREE.Vector2(x, y);
+    this.raycaster.setFromCamera(pointer, this.cameraRenderer.Camera);
+    for (const button of this.buttons) {
+      const intersects = this.raycaster.intersectObject(button.object);
+      if (intersects.length > 0) {
+        if (this.scene.pointerState.isPointerDown) {
+          button.onClick();
+        }
+      }
+    }
+  }
+
   destroy(): void {
     this.cameraRenderer.destroy();
-    this.addButton.destroy();
-    for (const renderer of this.matchRowRenderers.values()) {
+    for (const button of this.buttons) {
+      button.destroy();
+    }
+    for (const renderer of this.roomRenderers.values()) {
       renderer.destroy();
     }
     super.destroy();

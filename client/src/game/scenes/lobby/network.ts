@@ -4,16 +4,23 @@ import { NetworkManager } from "../../models";
 export default class LobbySceneNetworkManager extends NetworkManager {
   onLobbyData: () => void;
 
+  onGameStart: () => void;
+
   lobbyData: LobbyData = { rooms: [] };
 
-  constructor(user: User, onLobbyData: () => void) {
+  constructor(user: User, onLobbyData: () => void, onGameStart: () => void) {
     super(user);
     this.onLobbyData = onLobbyData;
+    this.onGameStart = onGameStart;
     clientOnEvent(this.socket, "message", (data) => {
       switch (data.event) {
         case "lobby-data:update": {
           this.updateLobbyData(data.lobbyData);
           this.onLobbyData();
+          break;
+        }
+        case "game:start": {
+          this.onGameStart();
           break;
         }
         default: {
@@ -24,14 +31,17 @@ export default class LobbySceneNetworkManager extends NetworkManager {
   }
 
   sendCreateRoom() {
+    if (!this.checkIsSocketOpen()) return;
     clientEmitEvent(this.socket, { event: "room:create" });
   }
 
-  sendJoinRoom() {
-    clientEmitEvent(this.socket, { event: "room:join" });
+  sendJoinRoom(roomId: number) {
+    if (!this.checkIsSocketOpen()) return;
+    clientEmitEvent(this.socket, { event: "room:join", roomId });
   }
 
   sendLeaveRoom() {
+    if (!this.checkIsSocketOpen()) return;
     clientEmitEvent(this.socket, { event: "room:leave" });
   }
 

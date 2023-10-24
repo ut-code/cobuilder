@@ -1,25 +1,32 @@
 import { WebSocket } from "ws";
-import { serverEmitEvent, serverOnEvent } from "shared";
-import { Room, RoomManager, UserInLobby } from "../roomManager";
+import { User, serverEmitEvent, serverOnEvent } from "shared";
+import { Room, RoomManager } from "../RoomManager";
 
 export default function roomHandler(
   socket: WebSocket,
   roomManager: RoomManager,
-  user: UserInLobby
+  user: User,
+  onClose: () => void
 ) {
-  roomManager.addUser(new UserInLobby(user.id, user.name));
+  roomManager.addUser(user);
   setInterval(() => {
     serverEmitEvent(socket, {
       event: "lobby-data:update",
       lobbyData: {
-        rooms: roomManager.rooms.map((room: Room) => {
-          return {
-            id: room.id,
-            users: room.users.map((userInLobby: UserInLobby) => {
-              return { id: userInLobby.id, name: userInLobby.name };
-            }),
-          };
-        }),
+        rooms: roomManager.rooms
+          .filter((room) => !room.isPlaying)
+          .map((room: Room) => {
+            return {
+              id: room.id,
+              users: room.users.map((userInRoom: User) => {
+                return {
+                  id: userInRoom.id,
+                  name: userInRoom.name,
+                  status: userInRoom.status,
+                };
+              }),
+            };
+          }),
       },
     });
   }, 10);
@@ -27,14 +34,18 @@ export default function roomHandler(
     switch (data.event) {
       case "room:create": {
         const userInLobby = roomManager.getUser(user.id);
-        if (userInLobby && !userInLobby.isWaiting) {
-          roomManager.createRoom("new room", userInLobby);
-          userInLobby.isWaiting = true;
+        if (userInLobby?.status === "lobby") {
+          roomManager.addRoom("new room", userInLobby);
+          userInLobby.status = "waiting";
         }
         break;
       }
       case "room:join": {
-        console.log("room:join");
+        const userInLobby = roomManager.getUser(user.id);
+        if (userInLobby?.status === "lobby") {
+          roomManager.joinRoom(data.roomId, userInLobby);
+          userInLobby.status = "waiting";
+        }
         break;
       }
       default: {
@@ -42,10 +53,7 @@ export default function roomHandler(
       }
     }
   });
-  socket.on("joinRoom", (roomId: number, userInLobby: UserInLobby) => {
-    roomManager.joinRoom(roomId, userInLobby);
-  });
-  socket.on("close", () => {
-    roomManager.removeUser(user.id);
+  serverOnEvent(socket, "close", () => {
+    onClose();
   });
 }

@@ -3,11 +3,10 @@ import express from "express";
 import http from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import * as dotenv from "dotenv";
-import { serverOnEvent } from "shared";
-import Game from "./game/game";
-import registerGameHandler from "./event-handlers/gameHandler";
+import { serverEmitEvent, serverOnEvent, User } from "shared";
+import registerGameHandler from "./event-handlers/gameWorkerHandler";
 import registerRoomHandler from "./event-handlers/roomHandler";
-import { RoomManager, UserInLobby } from "./roomManager";
+import { RoomManager } from "./RoomManager";
 import indexRouter from "./routes/index";
 import userRouter from "./routes/user";
 
@@ -17,8 +16,15 @@ const app = express();
 const server = http.createServer(app);
 const { WEB_ORIGIN } = process.env;
 
-const roomManager = new RoomManager();
-const game = new Game();
+const sockets = new Map<User, WebSocket>();
+
+const roomManager = new RoomManager((users) => {
+  for (const user of users) {
+    const socket = sockets.get(user);
+    if (!socket) throw new Error();
+    serverEmitEvent(socket, { event: "game:start" });
+  }
+});
 
 app.use(cors({ origin: [WEB_ORIGIN as string] }));
 
@@ -26,42 +32,29 @@ app.use(express.json());
 
 const wss = new WebSocketServer({ server });
 
-export interface User {
-  id: number;
-  name: string;
-}
-
-let currentTime = Date.now();
-setInterval(() => {
-  const previousTime = currentTime;
-  currentTime = Date.now();
-  game.createPlayerActions();
-  game.runPlayerActions(currentTime - previousTime);
-  game.moveBullets();
-  game.detectCollision();
-  game.updatePlayersIsDead();
-}, 10);
-
 const onConnection = (socket: WebSocket) => {
   serverOnEvent(socket, "message", (data) => {
     // 初回のイベントはconnectionである必要がある
     if (data.event === "connection") {
       const user = data.userConnecting;
-      switch (data.networkManagerName) {
-        case "LobbySceneNetworkManager": {
-          registerRoomHandler(
-            socket,
-            roomManager,
-            new UserInLobby(user.id, user.name)
-          );
+      sockets.set(user, socket);
+      switch (user.status) {
+        case "lobby": {
+          registerRoomHandler(socket, roomManager, user, () => {
+            sockets.delete(user);
+          });
           break;
         }
-        case "MainSceneNetworkManager": {
-          registerGameHandler(socket, game, user.id);
+        case "game": {
+          const gameWorker = roomManager.getGameWorkerByUserId(user.id);
+          if (!gameWorker) throw new Error();
+          registerGameHandler(socket, gameWorker, user.id, () => {
+            sockets.delete(user);
+          });
           break;
         }
         default:
-          throw new Error(`Unexpected name: ${data.networkManagerName}`);
+          throw new Error(`Unexpected user status: ${user.status}`);
       }
     }
   });
