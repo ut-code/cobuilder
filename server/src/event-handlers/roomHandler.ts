@@ -13,18 +13,20 @@ export default function roomHandler(
     serverEmitEvent(socket, {
       event: "lobby-data:update",
       lobbyData: {
-        rooms: roomManager.rooms.map((room: Room) => {
-          return {
-            id: room.id,
-            users: room.users.map((userInRoom: User) => {
-              return {
-                id: userInRoom.id,
-                name: userInRoom.name,
-                status: userInRoom.status,
-              };
-            }),
-          };
-        }),
+        rooms: roomManager.rooms
+          .filter((room) => !room.isPlaying)
+          .map((room: Room) => {
+            return {
+              id: room.id,
+              users: room.users.map((userInRoom: User) => {
+                return {
+                  id: userInRoom.id,
+                  name: userInRoom.name,
+                  status: userInRoom.status,
+                };
+              }),
+            };
+          }),
       },
     });
   }, 10);

@@ -10,6 +10,8 @@ export class Room {
 
   limit = 2;
 
+  isPlaying = false;
+
   constructor(id: number, name: string, user: User) {
     this.id = id;
     this.name = name;
@@ -57,9 +59,11 @@ export class RoomManager {
   joinRoom(roomId: number, user: User) {
     const room = this.getRoom(roomId);
     if (!room) throw new Error();
+    if (room.isPlaying) return;
     room.users.push(user);
     if (room.users.length === room.limit) {
       this.createGameWorker(roomId);
+      room.isPlaying = true;
       this.onGameStart(room.users);
     }
   }
