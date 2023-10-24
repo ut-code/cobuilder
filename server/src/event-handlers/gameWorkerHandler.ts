@@ -9,10 +9,8 @@ export default function gameWorkerHandler(
   userId: number,
   onClose: () => void
 ) {
-  console.log("aaa");
   // eslint-disable-next-line no-param-reassign
   gameWorker.on("message", (value: WorkerEvent) => {
-    console.log("bbb");
     switch (value.event) {
       case "game-data:update": {
         serverEmitEvent(socket, value);
