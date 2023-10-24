@@ -10,7 +10,6 @@ import {
 
 // client -> server
 export const connection = "connection";
-export type NetworkManagerName = string;
 export type UserConnecting = User;
 
 export const createPlayer = "player:create";
@@ -29,7 +28,6 @@ export const leaveRoom = "room:leave";
 // client -> server data-types
 export type ConnectionEventData = {
   event: typeof connection;
-  networkManagerName: NetworkManagerName;
   userConnecting: UserConnecting;
 };
 export type CreateUserEventData = {
@@ -74,6 +72,8 @@ export type LobbyData = {
   rooms: RoomData[];
 };
 
+export const startGame = "game:start";
+
 // server -> client data-types
 export type UpdateGameDataEventData = {
   event: typeof updateGameData;
@@ -83,9 +83,16 @@ export type UpdateLobbyDataEventData = {
   event: typeof updateLobbyData;
   lobbyData: LobbyData;
 };
+export type StartGameEventData = {
+  event: typeof startGame;
+};
 
-export type ServerEventName = typeof updateGameData | typeof updateLobbyData;
+export type ServerEventName =
+  | typeof updateGameData
+  | typeof updateLobbyData
+  | typeof startGame;
 
 export type ServerEventData =
   | UpdateGameDataEventData
-  | UpdateLobbyDataEventData;
+  | UpdateLobbyDataEventData
+  | StartGameEventData;

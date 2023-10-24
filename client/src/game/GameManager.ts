@@ -8,7 +8,7 @@ import MainSceneNetworkManager from "./scenes/main/network";
 import LobbySceneNetworkManager from "./scenes/lobby/network";
 
 export default class GameManager {
-  user: User = { id: 0, name: "" };
+  user: User = { id: 0, name: "", status: "login" };
 
   canvas: HTMLCanvasElement;
 
@@ -30,6 +30,7 @@ export default class GameManager {
   private createScene(sceneType: SceneType) {
     switch (sceneType) {
       case "main": {
+        this.user.status = "game";
         const newMainScene = new MainScene(this.user.id, () => {
           this.switchScene("lobby");
         });
@@ -51,6 +52,7 @@ export default class GameManager {
         break;
       }
       case "login": {
+        this.user.status = "login";
         this.scene = new LoginScene(() => {
           this.switchScene("lobby");
         });
@@ -66,6 +68,7 @@ export default class GameManager {
         break;
       }
       case "lobby": {
+        this.user.status = "lobby";
         const newLobbyScene = new LobbyScene(() => {
           this.switchScene("main");
         });
@@ -74,6 +77,9 @@ export default class GameManager {
           this.user,
           () => {
             newLobbyScene.updateScene(newNetworkManager.lobbyData);
+          },
+          () => {
+            this.switchScene("main");
           }
         );
         this.networkManager = newNetworkManager;

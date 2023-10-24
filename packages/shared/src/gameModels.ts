@@ -1,6 +1,7 @@
 export interface User {
   id: number;
   name: string;
+  status: "login" | "mode-select" | "lobby" | "waiting" | "game";
 }
 
 export interface Vector3 {

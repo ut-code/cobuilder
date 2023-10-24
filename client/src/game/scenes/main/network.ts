@@ -29,6 +29,7 @@ export default class MainSceneNetworkManager extends NetworkManager {
   }
 
   sendCreatePlayer() {
+    if (!this.checkIsSocketOpen()) return;
     clientEmitEvent(this.socket, {
       event: "player:create",
       newUserData: this.user,
@@ -36,6 +37,7 @@ export default class MainSceneNetworkManager extends NetworkManager {
   }
 
   sendUserKeyboardInputs(inputs: Map<string, boolean>) {
+    if (!this.checkIsSocketOpen()) return;
     const data = JSON.stringify(Object.fromEntries(inputs));
     clientEmitEvent(this.socket, {
       event: "keyboard-inputs:update",

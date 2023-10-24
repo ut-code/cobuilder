@@ -8,6 +8,7 @@ import {
   LeaveRoomEventData,
   UpdateGameDataEventData,
   UpdateLobbyDataEventData,
+  StartGameEventData,
 } from "../schema";
 
 // client -> server
@@ -48,6 +49,10 @@ export function serverEmitEvent(
 export function serverEmitEvent(
   ws: ServerSocket,
   data: UpdateLobbyDataEventData
+): void;
+export function serverEmitEvent(
+  ws: ServerSocket,
+  data: StartGameEventData
 ): void;
 export function serverEmitEvent(socket: ServerSocket, data: unknown) {
   socket.send(JSON.stringify(data));
