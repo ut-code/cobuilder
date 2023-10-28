@@ -1,6 +1,6 @@
 import {
   User,
-  PlayerStatus,
+  FighterStatus,
   BulletStatus,
   ObstacleStatus,
   RoomData,
@@ -12,7 +12,7 @@ import {
 export const connection = "connection";
 export type UserConnecting = User;
 
-export const createPlayer = "player:create";
+export const createFighter = "fighter:create";
 export type NewUserData = User;
 
 export const updateKeyboardInputs = "keyboard-inputs:update";
@@ -31,7 +31,7 @@ export type ConnectionEventData = {
   userConnecting: UserConnecting;
 };
 export type CreateUserEventData = {
-  event: typeof createPlayer;
+  event: typeof createFighter;
   newUserData: NewUserData;
 };
 export type KeyboardInputsEventData = {
@@ -62,7 +62,7 @@ export type ClientEventData =
 
 export const updateGameData = "game-data:update";
 export type GameData = {
-  playerStatuses: PlayerStatus[];
+  fighterStatuses: FighterStatus[];
   bulletStatuses: BulletStatus[];
   obstacleStatuses: ObstacleStatus[];
 };

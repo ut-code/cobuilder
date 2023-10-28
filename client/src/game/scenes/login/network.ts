@@ -1,4 +1,4 @@
-import { NetworkManager } from "../../models";
+import NetworkManager from "../base/network";
 
 export default class LoginSceneNetworkManager extends NetworkManager {
   sendLogin() {

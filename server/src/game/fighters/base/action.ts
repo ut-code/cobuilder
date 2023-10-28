@@ -1,16 +1,25 @@
 import { Vector3 } from "shared";
-import { Player, PLAYER_HEIGHT } from "../model";
-import { PlayerAction } from "./playerAction";
+import BaseFighter from ".";
+import { FIGHTER_HEIGHT } from "../../model";
 
-export class MoveAction implements PlayerAction {
-  actor: Player;
+export interface BaseFighterAction {
+  actor: BaseFighter;
+
+  isCompleted: boolean;
+
+  tick(delta: number): void;
+}
+
+export class MoveAction implements BaseFighterAction {
+  actor: BaseFighter;
 
   isCompleted = false;
 
   vector: Vector3;
 
-  constructor(player: Player, vector: Vector3) {
-    this.actor = player;
+  constructor(fighter: BaseFighter, vector: Vector3) {
+    fighter.setAction("move");
+    this.actor = fighter;
     this.vector = vector;
   }
 
@@ -23,15 +32,16 @@ export class MoveAction implements PlayerAction {
   }
 }
 
-export class RotateAction implements PlayerAction {
-  actor: Player;
+export class RotateAction implements BaseFighterAction {
+  actor: BaseFighter;
 
   isCompleted = false;
 
   rotation: Vector3;
 
-  constructor(player: Player, rotation: Vector3) {
-    this.actor = player;
+  constructor(fighter: BaseFighter, rotation: Vector3) {
+    fighter.setAction("rotate");
+    this.actor = fighter;
     this.rotation = rotation;
   }
 
@@ -43,19 +53,19 @@ export class RotateAction implements PlayerAction {
   }
 }
 
-export class JumpAction implements PlayerAction {
-  actor: Player;
+export class JumpAction implements BaseFighterAction {
+  actor: BaseFighter;
 
   isCompleted = false;
 
   verticalVelocity = 0;
 
-  constructor(player: Player) {
-    this.actor = player;
-    if (player.isJumping) {
+  constructor(fighter: BaseFighter) {
+    this.actor = fighter;
+    if (fighter.isJumping) {
       this.isCompleted = true;
     } else {
-      this.verticalVelocity = player.jumpPower;
+      this.verticalVelocity = fighter.jumpPower;
       this.actor.isJumping = true;
     }
   }
@@ -63,8 +73,8 @@ export class JumpAction implements PlayerAction {
   tick(delta: number): void {
     this.actor.position.z += this.verticalVelocity * delta * 0.01;
     this.verticalVelocity -= delta * 0.001 * 9.8;
-    if (this.actor.position.z <= PLAYER_HEIGHT / 2) {
-      this.actor.position.z = PLAYER_HEIGHT / 2;
+    if (this.actor.position.z <= FIGHTER_HEIGHT / 2) {
+      this.actor.position.z = FIGHTER_HEIGHT / 2;
       this.isCompleted = true;
       this.actor.isJumping = false;
     }
