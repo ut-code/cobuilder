@@ -10,25 +10,13 @@ export interface Vector3 {
   z: number;
 }
 
-export type FighterActions =
-  | "idle"
-  | "move"
-  | "rotate"
-  | "attack1"
-  | "attack2"
-  | "attack3"
-  | "attack4"
-  | "attack5"
-  | "attack6";
-
-export type FighterStatus = {
+export type PlayerStatus = {
   id: number;
   HP: number;
   score: number;
   position: Vector3;
   rotation: Vector3;
   isDead: boolean;
-  currentAction: FighterActions;
 };
 
 export type BulletStatus = {

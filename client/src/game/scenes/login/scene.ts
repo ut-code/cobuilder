@@ -1,12 +1,8 @@
 import * as THREE from "three";
-import {
-  BaseCameraRenderer,
-  BaseScene,
-  BaseSceneRenderer,
-} from "../base";
+import { CameraRenderer, Scene, SceneRenderer } from "../../models";
 import { PointerState } from "../../InputManger";
 
-export class LoginScene extends BaseScene {
+export class LoginScene extends Scene {
   pointerState: PointerState = { x: 0, y: 0, isPointerDown: false };
 
   constructor(onSceneDestroyed: () => void) {
@@ -25,7 +21,7 @@ export class LoginScene extends BaseScene {
   }
 }
 
-class LoginSceneCameraRenderer extends BaseCameraRenderer {
+class LoginSceneCameraRenderer extends CameraRenderer {
   render(): void {
     this.camera.position.set(2, 2, 10);
   }
@@ -46,7 +42,7 @@ export class LoginButton extends THREE.Sprite {
   }
 }
 
-export class LoginSceneRenderer extends BaseSceneRenderer {
+export class LoginSceneRenderer extends SceneRenderer {
   scene: LoginScene;
 
   cameraRenderer: LoginSceneCameraRenderer;

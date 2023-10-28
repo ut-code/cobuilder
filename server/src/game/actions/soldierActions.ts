@@ -1,18 +1,17 @@
 import { rotateVector3 } from "shared";
-import { FighterAction } from "../common/action";
-import Bullet from "../common/bullet";
-import { FIGHTER_DEPTH } from "../../model";
-import Soldier from "./fighter";
+import { PlayerAction } from "./playerAction";
+import { Bullet, PLAYER_DEPTH } from "../model";
+import Soldier from "../fighters/soldier";
 
-export default class ShootAction implements FighterAction {
+export default class ShootAction implements PlayerAction {
   actor: Soldier;
 
   isCompleted = false;
 
   bullets: Bullet[];
 
-  constructor(fighter: Soldier, bullets: Bullet[]) {
-    this.actor = fighter;
+  constructor(player: Soldier, bullets: Bullet[]) {
+    this.actor = player;
     this.bullets = bullets;
   }
 
@@ -20,7 +19,7 @@ export default class ShootAction implements FighterAction {
     if (!this.actor.isCoolingDown) {
       const { x, y, z } = this.actor.position;
       const vector = rotateVector3(
-        { x: 0, y: FIGHTER_DEPTH + 10, z: 0 },
+        { x: 0, y: PLAYER_DEPTH + 10, z: 0 },
         this.actor.rotation
       );
       const bullet = new Bullet(

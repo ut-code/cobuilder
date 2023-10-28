@@ -1,10 +1,8 @@
 import { User } from "shared";
-import { SceneType } from "./models";
-import BaseNetworkManager from "./scenes/base/network";
-import { BaseScene, BaseSceneRenderer } from "./scenes/base";
-import { MainSceneRenderer, MainScene } from "./scenes/main";
-import { LoginSceneRenderer, LoginScene } from "./scenes/login";
-import { LobbyScene, LobbySceneRenderer } from "./scenes/lobby";
+import { Scene, SceneRenderer, SceneType, NetworkManager } from "./models";
+import { MainSceneRenderer, MainScene } from "./scenes/main/scene";
+import { LoginSceneRenderer, LoginScene } from "./scenes/login/scene";
+import { LobbyScene, LobbySceneRenderer } from "./scenes/lobby/scene";
 import InputManager from "./InputManger";
 import MainSceneNetworkManager from "./scenes/main/network";
 import LobbySceneNetworkManager from "./scenes/lobby/network";
@@ -14,13 +12,13 @@ export default class GameManager {
 
   canvas: HTMLCanvasElement;
 
-  private scene!: BaseScene;
+  private scene!: Scene;
 
-  private sceneRenderer!: BaseSceneRenderer;
+  private sceneRenderer!: SceneRenderer;
 
   private inputManager!: InputManager;
 
-  private networkManager!: BaseNetworkManager;
+  private networkManager!: NetworkManager;
 
   constructor(canvas: HTMLCanvasElement) {
     this.user.id = Math.random();
@@ -43,7 +41,7 @@ export default class GameManager {
             newMainScene.updateScene(newNetworkManager.gameData);
           },
           () => {
-            newNetworkManager.sendCreateFighter();
+            newNetworkManager.sendCreatePlayer();
           }
         );
         this.networkManager = newNetworkManager;

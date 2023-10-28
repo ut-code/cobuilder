@@ -3,16 +3,17 @@ import * as math from "mathjs";
 import {
   BulletStatus,
   ObstacleStatus,
-  FighterStatus,
+  PlayerStatus,
   Vector3,
   rotateVector3,
 } from "shared";
-import { GameObject, Renderer } from "../../models";
-import { BaseCameraRenderer, BaseScene, BaseSceneRenderer } from "../base";
 import {
-  MartialArtist,
-  MartialArtistRenderer,
-} from "../../fighters/martialArtist";
+  GameObject,
+  Scene,
+  Renderer,
+  SceneRenderer,
+  CameraRenderer,
+} from "../../models";
 import upSky from "../../../../resources/clouds1_up.png";
 import downSky from "../../../../resources/clouds1_down.png";
 import eastSky from "../../../../resources/clouds1_east.png";
@@ -21,9 +22,28 @@ import southSky from "../../../../resources/clouds1_south.png";
 import northSky from "../../../../resources/clouds1_north.png";
 import dryGround from "../../../../resources/ground.png";
 import brick from "../../../../resources/brick_wall-red.png";
-import { BaseFighter, BaseFighterRenderer } from "../../fighters/base";
 
 const STAGE_WIDTH = 800;
+
+export class Player implements GameObject {
+  id: number;
+
+  HP = 3;
+
+  score = 0;
+
+  position: Vector3;
+
+  rotation: Vector3;
+
+  isDead = false;
+
+  constructor(id: number, position: Vector3, rotation: Vector3) {
+    this.id = id;
+    this.position = position;
+    this.rotation = rotation;
+  }
+}
 
 export class Bullet implements GameObject {
   id: number;
@@ -39,38 +59,34 @@ export class Bullet implements GameObject {
   }
 }
 
-export class MainScene extends BaseScene {
+export class MainScene extends Scene {
   obstacles: GameObject[] = [];
 
-  userFighterId: number;
+  userPlayerId: number;
 
-  fighters: BaseFighter[] = [];
+  players: Player[] = [];
 
   bullets: Bullet[] = [];
 
-  constructor(userFighterId: number, onSceneDestroyed: () => void) {
+  constructor(userPlayerId: number, onSceneDestroyed: () => void) {
     super();
-    this.userFighterId = userFighterId;
+    this.userPlayerId = userPlayerId;
     this.onSceneDestroyed = onSceneDestroyed;
-    this.fighters.push(
-      new MartialArtist(
-        userFighterId,
-        { x: 0, y: 0, z: 0 },
-        { x: 0, y: 0, z: 0 }
-      )
+    this.players.push(
+      new Player(userPlayerId, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 })
     );
   }
 
-  getFighter(id: number) {
-    return this.fighters.find((fighter) => fighter.id === id);
+  getPlayer(id: number) {
+    return this.players.find((player) => player.id === id);
   }
 
-  addFighter(fighter: BaseFighter) {
-    this.fighters.push(fighter);
+  addPlayer(player: Player) {
+    this.players.push(player);
   }
 
-  removeFighter(fighter: BaseFighter) {
-    this.fighters.splice(this.fighters.indexOf(fighter), 1);
+  removePlayer(player: Player) {
+    this.players.splice(this.players.indexOf(player), 1);
   }
 
   getBullet(id: number) {
@@ -86,32 +102,32 @@ export class MainScene extends BaseScene {
   }
 
   updateScene(gameData: {
-    fighterStatuses: FighterStatus[];
+    playerStatuses: PlayerStatus[];
     bulletStatuses: BulletStatus[];
     obstacleStatuses: ObstacleStatus[];
   }) {
-    const { fighterStatuses, bulletStatuses } = gameData;
-    // fighter の更新
-    for (const fighterStatus of fighterStatuses) {
-      const { id, HP, position, rotation } = fighterStatus;
-      const existingFighter = this.getFighter(id);
-      if (!existingFighter) {
-        this.addFighter(new MartialArtist(id, position, rotation));
-      } else if (!fighterStatus.isDead) {
-        if (existingFighter.position !== position) {
-          existingFighter.position = position;
+    const { playerStatuses, bulletStatuses } = gameData;
+    // player の更新
+    for (const playerStatus of playerStatuses) {
+      const { id, HP, score, position, rotation } = playerStatus;
+      const existingPlayer = this.getPlayer(id);
+      if (!existingPlayer) {
+        this.addPlayer(new Player(id, position, rotation));
+      } else if (!playerStatus.isDead) {
+        if (existingPlayer.position !== position) {
+          existingPlayer.position = position;
         }
-        if (existingFighter.rotation !== rotation) {
-          existingFighter.rotation = rotation;
+        if (existingPlayer.rotation !== rotation) {
+          existingPlayer.rotation = rotation;
         }
-        if (existingFighter.HP !== HP) {
-          existingFighter.HP = HP;
+        if (existingPlayer.HP !== HP) {
+          existingPlayer.HP = HP;
         }
-        if (existingFighter.currentAction !== fighterStatus.currentAction) {
-          existingFighter.currentAction = fighterStatus.currentAction;
+        if (existingPlayer.score !== score) {
+          existingPlayer.score = score;
         }
       } else {
-        existingFighter.isDead = true;
+        existingPlayer.isDead = true;
       }
     }
 
@@ -135,6 +151,44 @@ export class MainScene extends BaseScene {
     for (const unusedBullet of unusedBullets) {
       this.removeBullet(unusedBullet);
     }
+  }
+}
+
+class PlayerRenderer implements Renderer {
+  player: Player;
+
+  playerObject: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>;
+
+  threeScene: THREE.Scene;
+
+  constructor(player: Player, threeScene: THREE.Scene) {
+    this.player = player;
+    this.threeScene = threeScene;
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0x87cefa });
+    this.playerObject = new THREE.Mesh(geometry, material);
+    const { x, y, z } = player.position;
+    const { x: rotationX, y: rotationY, z: rotationZ } = player.rotation;
+    this.playerObject.position.set(x, y, z);
+    this.playerObject.rotation.set(rotationX, rotationY, rotationZ);
+    this.playerObject.scale.set(10, 10, 5);
+    this.threeScene.add(this.playerObject);
+  }
+
+  render() {
+    const { x, y, z } = this.player.position;
+    const { x: rotationX, y: rotationY, z: rotationZ } = this.player.rotation;
+    this.playerObject.position.set(x, y, z);
+    this.playerObject.rotation.set(rotationX, rotationY, rotationZ);
+    if (this.player.HP === 2) {
+      this.playerObject.material.color.set(0xffff00);
+    } else if (this.player.HP === 1) {
+      this.playerObject.material.color.set(0xff4500);
+    }
+  }
+
+  destroy() {
+    this.threeScene.remove(this.playerObject);
   }
 }
 
@@ -169,24 +223,20 @@ class BulletRenderer implements Renderer {
   }
 }
 
-class MainSceneCameraRenderer extends BaseCameraRenderer {
-  userFighter: BaseFighter;
+class MainSceneCameraRenderer extends CameraRenderer {
+  userPlayer: Player;
 
-  constructor(
-    aspect: number,
-    threeScene: THREE.Scene,
-    userFighter: BaseFighter
-  ) {
+  constructor(aspect: number, threeScene: THREE.Scene, userPlayer: Player) {
     super(aspect, threeScene);
-    this.userFighter = userFighter;
+    this.userPlayer = userPlayer;
     this.camera.lookAt(0, 1, 0);
   }
 
   render(): void {
-    const { x, y, z } = this.userFighter.position;
+    const { x, y, z } = this.userPlayer.position;
     const vector = rotateVector3(
       { x: 0, y: -30, z: 15 },
-      this.userFighter.rotation
+      this.userPlayer.rotation
     );
     const { x: deltaX, y: deltaY, z: deltaZ } = vector;
     this.camera.position.set(x + deltaX, y + deltaY, z + deltaZ);
@@ -194,12 +244,12 @@ class MainSceneCameraRenderer extends BaseCameraRenderer {
   }
 }
 
-export class MainSceneRenderer extends BaseSceneRenderer {
+export class MainSceneRenderer extends SceneRenderer {
   protected cameraRenderer: MainSceneCameraRenderer;
 
   protected scene: MainScene;
 
-  fighterRenderers: Map<BaseFighter, BaseFighterRenderer>;
+  playerRenderers: Map<Player, PlayerRenderer>;
 
   bulletRenderers: Map<Bullet, BulletRenderer>;
 
@@ -208,20 +258,20 @@ export class MainSceneRenderer extends BaseSceneRenderer {
     this.scene = scene;
 
     // カメラ作成
-    const userFighter = scene.getFighter(scene.userFighterId);
-    if (!userFighter) throw new Error();
+    const userPlayer = scene.getPlayer(scene.userPlayerId);
+    if (!userPlayer) throw new Error();
     this.cameraRenderer = new MainSceneCameraRenderer(
       canvas.width / canvas.height,
       this.threeScene,
-      userFighter
+      userPlayer
     );
 
-    // FighterRendererとScoreRenderers作成
-    this.fighterRenderers = new Map();
-    for (const fighter of this.scene.fighters) {
-      this.fighterRenderers.set(
-        fighter,
-        new MartialArtistRenderer(fighter, this.threeScene)
+    // PlayerRendererとScoreRenderers作成
+    this.playerRenderers = new Map();
+    for (const player of this.scene.players) {
+      this.playerRenderers.set(
+        player,
+        new PlayerRenderer(player, this.threeScene)
       );
     }
 
@@ -289,28 +339,26 @@ export class MainSceneRenderer extends BaseSceneRenderer {
   }
 
   render() {
-    // Fighter の描画
-    const unusedFighterRenderers = new Set(this.fighterRenderers.values());
-    for (const fighter of this.scene.fighters) {
-      if (!fighter.isDead) {
-        const existingRenderer = this.fighterRenderers.get(fighter);
+    // Player の描画
+    const unusedPlayerRenderers = new Set(this.playerRenderers.values());
+    for (const player of this.scene.players) {
+      if (!player.isDead) {
+        const existingRenderer = this.playerRenderers.get(player);
         if (!existingRenderer) {
-          this.fighterRenderers.set(
-            fighter,
-            new MartialArtistRenderer(fighter, this.threeScene)
+          this.playerRenderers.set(
+            player,
+            new PlayerRenderer(player, this.threeScene)
           );
         } else {
           existingRenderer.render();
-          unusedFighterRenderers.delete(existingRenderer);
+          unusedPlayerRenderers.delete(existingRenderer);
         }
       }
     }
-    for (const renderer of unusedFighterRenderers) {
+    for (const renderer of unusedPlayerRenderers) {
       renderer.destroy();
-      this.fighterRenderers.delete(renderer.fighter);
+      this.playerRenderers.delete(renderer.player);
     }
-
-    // Fighter
 
     // Bulletの描画
     const unusedBulletRenderers = new Set(this.bulletRenderers.values());
@@ -338,8 +386,8 @@ export class MainSceneRenderer extends BaseSceneRenderer {
 
   destroy() {
     this.cameraRenderer.destroy();
-    for (const fighterRenderer of this.fighterRenderers.values()) {
-      fighterRenderer.destroy();
+    for (const playerRenderer of this.playerRenderers.values()) {
+      playerRenderer.destroy();
     }
     for (const bulletRenderer of this.bulletRenderers.values()) {
       bulletRenderer.destroy();

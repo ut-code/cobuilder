@@ -2,19 +2,15 @@ import * as math from "mathjs";
 import { rotateVector3 } from "shared";
 import {
   GameObject,
-  FIGHTER_DEPTH,
-  FIGHTER_HEIGHT,
-  FIGHTER_WIDTH,
+  Player,
+  Bullet,
+  PLAYER_DEPTH,
+  PLAYER_HEIGHT,
+  PLAYER_WIDTH,
   STAGE_WIDTH,
 } from "./model";
-import BaseFighter from "./fighters/base";
-import Bullet from "./fighters/base/bullet";
-import {
-  BaseFighterAction,
-  MoveAction,
-  RotateAction,
-  JumpAction,
-} from "./fighters/base/action";
+import { PlayerAction } from "./actions/playerAction";
+import { MoveAction, RotateAction, JumpAction } from "./actions/commonActions";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const sensitivity = 3;
@@ -24,41 +20,40 @@ const speed = 80;
 export default class Game {
   obstacles: GameObject[] = [];
 
-  fighters: BaseFighter[] = [];
+  players: Player[] = [];
 
   bullets: Bullet[] = [];
 
-  fighterActions: Set<BaseFighterAction> = new Set();
+  playerActions: Set<PlayerAction> = new Set();
 
-  userInputs: Map<BaseFighter, Record<string, boolean>> = new Map();
+  userInputs: Map<Player, Record<string, boolean>> = new Map();
 
   constructor() {
     this.run();
   }
 
-  getFighter(id: number) {
-    return this.fighters.find((fighter) => fighter.id === id);
+  getPlayer(id: number) {
+    return this.players.find((player) => player.id === id);
   }
 
-  setFighter(fighter: BaseFighter) {
-    this.fighters.push(fighter);
+  setPlayer(player: Player) {
+    this.players.push(player);
   }
 
-  removeFighter(fighter: BaseFighter) {
-    this.fighters.splice(this.fighters.indexOf(fighter), 1);
+  removePlayer(player: Player) {
+    this.players.splice(this.players.indexOf(player), 1);
   }
 
-  setUserInputs(fighterId: number, inputs: Record<string, boolean>) {
-    const fighter = this.getFighter(fighterId);
-    if (!fighter) throw new Error();
-    this.userInputs.set(fighter, inputs);
+  setUserInputs(playerId: number, inputs: Record<string, boolean>) {
+    const player = this.getPlayer(playerId);
+    if (!player) throw new Error();
+    this.userInputs.set(player, inputs);
   }
 
-  createFighterActions() {
+  createPlayerActions() {
     for (const [actor, inputs] of this.userInputs) {
-      actor.setAction("idle");
       if (inputs.w) {
-        this.addFighterAction(
+        this.addPlayerAction(
           new MoveAction(
             actor,
             rotateVector3({ x: 0, y: 0.001 * speed, z: 0 }, actor.rotation)
@@ -66,7 +61,7 @@ export default class Game {
         );
       }
       if (inputs.s) {
-        this.addFighterAction(
+        this.addPlayerAction(
           new MoveAction(
             actor,
             rotateVector3({ x: 0, y: -0.001 * speed, z: 0 }, actor.rotation)
@@ -74,35 +69,35 @@ export default class Game {
         );
       }
       if (inputs.a) {
-        this.addFighterAction(
+        this.addPlayerAction(
           new RotateAction(actor, { x: 0, y: 0, z: 0.001 * sensitivity })
         );
       }
       if (inputs.d) {
-        this.addFighterAction(
+        this.addPlayerAction(
           new RotateAction(actor, { x: 0, y: 0, z: -0.001 * sensitivity })
         );
       }
       if (inputs[" "]) {
-        this.addFighterAction(new JumpAction(actor));
+        this.addPlayerAction(new JumpAction(actor));
       }
     }
   }
 
-  private addFighterAction(fighterAction: BaseFighterAction) {
-    this.fighterActions.add(fighterAction);
+  private addPlayerAction(playerAction: PlayerAction) {
+    this.playerActions.add(playerAction);
   }
 
-  removeFighterAction(fighterAction: BaseFighterAction) {
-    this.fighterActions.delete(fighterAction);
+  removePlayerAction(playerAction: PlayerAction) {
+    this.playerActions.delete(playerAction);
   }
 
-  runFighterActions(delta: number) {
-    for (const fighterAction of this.fighterActions) {
-      if (fighterAction.isCompleted) {
-        this.removeFighterAction(fighterAction);
+  runPlayerActions(delta: number) {
+    for (const playerAction of this.playerActions) {
+      if (playerAction.isCompleted) {
+        this.removePlayerAction(playerAction);
       } else {
-        fighterAction.tick(delta);
+        playerAction.tick(delta);
       }
     }
   }
@@ -119,34 +114,34 @@ export default class Game {
 
   // 衝突判定
   detectCollision() {
-    for (const fighter of this.fighters) {
-      if (!fighter.isDead) {
+    for (const player of this.players) {
+      if (!player.isDead) {
         for (const bullet of this.bullets) {
-          if (fighter !== bullet.owner) {
-            const { x, y } = fighter.position;
+          if (player !== bullet.owner) {
+            const { x, y } = player.position;
             const { x: bulletX, y: bulletY } = bullet.position;
             const distance = math.sqrt((x - bulletX) ** 2 + (y - bulletY) ** 2);
             if (
               distance <
-              math.sqrt((FIGHTER_DEPTH / 2) ** 2 + (FIGHTER_HEIGHT / 2) ** 2)
+              math.sqrt((PLAYER_DEPTH / 2) ** 2 + (PLAYER_HEIGHT / 2) ** 2)
             ) {
               bullet.owner.score += 10;
               this.removeBullet(bullet);
-              fighter.changeHP(-1);
+              player.changeHP(-1);
             }
           }
         }
-        if (fighter.position.x > STAGE_WIDTH / 2 - FIGHTER_WIDTH / 2) {
-          fighter.position.x = STAGE_WIDTH / 2 - FIGHTER_WIDTH / 2;
+        if (player.position.x > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
+          player.position.x = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
         }
-        if (fighter.position.x < -(STAGE_WIDTH / 2 - FIGHTER_WIDTH / 2)) {
-          fighter.position.x = -(STAGE_WIDTH / 2 - FIGHTER_WIDTH / 2);
+        if (player.position.x < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
+          player.position.x = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
         }
-        if (fighter.position.y > STAGE_WIDTH / 2 - FIGHTER_WIDTH / 2) {
-          fighter.position.y = STAGE_WIDTH / 2 - FIGHTER_WIDTH / 2;
+        if (player.position.y > STAGE_WIDTH / 2 - PLAYER_WIDTH / 2) {
+          player.position.y = STAGE_WIDTH / 2 - PLAYER_WIDTH / 2;
         }
-        if (fighter.position.y < -(STAGE_WIDTH / 2 - FIGHTER_WIDTH / 2)) {
-          fighter.position.y = -(STAGE_WIDTH / 2 - FIGHTER_WIDTH / 2);
+        if (player.position.y < -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2)) {
+          player.position.y = -(STAGE_WIDTH / 2 - PLAYER_WIDTH / 2);
         }
       }
     }
@@ -162,17 +157,17 @@ export default class Game {
     }
   }
 
-  updateFightersIsDead() {
-    for (const fighter of this.fighters) {
-      if (fighter.HP <= 0) {
-        fighter.isDead = true;
+  updatePlayersIsDead() {
+    for (const player of this.players) {
+      if (player.HP <= 0) {
+        player.isDead = true;
       }
     }
   }
 
   findEmptySpace() {
-    let x = Math.random() * (STAGE_WIDTH / 2 - FIGHTER_DEPTH / 2);
-    let y = Math.random() * (STAGE_WIDTH / 2 - FIGHTER_DEPTH / 2);
+    let x = Math.random() * (STAGE_WIDTH / 2 - PLAYER_DEPTH / 2);
+    let y = Math.random() * (STAGE_WIDTH / 2 - PLAYER_DEPTH / 2);
     let isSpaceFound = false;
     while (!isSpaceFound) {
       isSpaceFound = true;
@@ -181,7 +176,7 @@ export default class Game {
         const distance = math.sqrt((x - bulletX) ** 2 + (y - bulletY) ** 2);
         if (
           distance <
-          math.sqrt((FIGHTER_DEPTH / 2) ** 2 + (FIGHTER_HEIGHT / 2) ** 2)
+          math.sqrt((PLAYER_DEPTH / 2) ** 2 + (PLAYER_HEIGHT / 2) ** 2)
         ) {
           isSpaceFound = false;
           x = Math.random() * (STAGE_WIDTH - 50);
@@ -198,11 +193,11 @@ export default class Game {
     setInterval(() => {
       const previousTime = currentTime;
       currentTime = Date.now();
-      this.createFighterActions();
-      this.runFighterActions(currentTime - previousTime);
+      this.createPlayerActions();
+      this.runPlayerActions(currentTime - previousTime);
       this.moveBullets();
       this.detectCollision();
-      this.updateFightersIsDead();
+      this.updatePlayersIsDead();
     }, 10);
   }
 }

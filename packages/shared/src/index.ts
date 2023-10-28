@@ -1,11 +1,10 @@
 export {
   User,
   Vector3,
-  FighterStatus,
+  PlayerStatus,
   BulletStatus,
   ObstacleStatus,
   RoomData,
-  FighterActions,
 } from "./gameModels";
 
 export { default as rotateVector3 } from "./utils/rotateVector3";
@@ -31,8 +30,8 @@ export {
   ServerEventData,
   updateGameData,
   updateLobbyData,
-  createFighter,
-  updateKeyboardInputs,
+  createPlayer,
+  updateKeyboardInputs as updateUserKeyboardInputs,
   createRoom,
   joinRoom,
   leaveRoom,

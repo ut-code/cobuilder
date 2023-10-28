@@ -23,9 +23,9 @@ export default function gameWorkerHandler(
   });
   serverOnEvent(socket, "message", (data) => {
     switch (data.event) {
-      case "fighter:create": {
+      case "player:create": {
         gameWorker.postMessage({
-          event: "fighter:create",
+          event: "player:create",
           newUserData: {
             id: data.newUserData.id,
           },

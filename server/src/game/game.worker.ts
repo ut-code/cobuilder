@@ -5,7 +5,7 @@ import {
 } from "shared";
 import { parentPort } from "node:worker_threads";
 import Game from "./game";
-import BaseFighter from "./fighters/base";
+import { Player } from "./model";
 
 const game = new Game();
 
@@ -16,9 +16,9 @@ export type WorkerEvent =
 
 parentPort?.on("message", (value: WorkerEvent) => {
   switch (value.event) {
-    case "fighter:create": {
-      game.setFighter(
-        new BaseFighter(value.newUserData.id, game.findEmptySpace(), {
+    case "player:create": {
+      game.setPlayer(
+        new Player(value.newUserData.id, game.findEmptySpace(), {
           x: 0,
           y: 0,
           z: 0,
@@ -41,9 +41,8 @@ setInterval(() => {
   parentPort?.postMessage({
     event: "game-data:update",
     gameData: {
-      fighterStatuses: game.fighters.map((fighter) => {
-        const { id, HP, score, position, rotation, isDead, currentAction } =
-          fighter;
+      playerStatuses: game.players.map((player) => {
+        const { id, HP, score, position, rotation, isDead } = player;
         return {
           id,
           HP,
@@ -51,7 +50,6 @@ setInterval(() => {
           position,
           rotation,
           isDead,
-          currentAction,
         };
       }),
       bulletStatuses: game.bullets.map((bullet) => {

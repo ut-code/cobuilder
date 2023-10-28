@@ -1,7 +1,7 @@
 import { LobbyData, User, clientEmitEvent, clientOnEvent } from "shared";
-import BaseNetworkManager from "../base/network";
+import { NetworkManager } from "../../models";
 
-export default class LobbySceneNetworkManager extends BaseNetworkManager {
+export default class LobbySceneNetworkManager extends NetworkManager {
   onLobbyData: () => void;
 
   onGameStart: () => void;

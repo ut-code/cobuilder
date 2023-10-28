@@ -1,10 +1,6 @@
 import * as THREE from "three";
 import { LobbyData, Vector3 } from "shared";
-import {
-  BaseScene,
-  BaseSceneRenderer,
-  BaseCameraRenderer,
-} from "../base";
+import { Scene, SceneRenderer, CameraRenderer } from "../../models";
 import { PointerState } from "../../InputManger";
 import joinButtonImage from "../../../../resources/join.png";
 import createRoomButtonImage from "../../../../resources/create-room.png";
@@ -20,7 +16,7 @@ export class Room {
   }
 }
 
-export class LobbyScene extends BaseScene {
+export class LobbyScene extends Scene {
   rooms: Room[] = [];
 
   pointerState: PointerState = { x: 0, y: 0, isPointerDown: false };
@@ -70,7 +66,7 @@ export class LobbyScene extends BaseScene {
   }
 }
 
-class LobbySceneCameraRenderer extends BaseCameraRenderer {
+class LobbySceneCameraRenderer extends CameraRenderer {
   render(): void {
     this.camera.position.set(0, 0, 10);
     this.camera.lookAt(0, 0, 0);
@@ -157,7 +153,7 @@ type OnButtonClicks = {
   onJoinButtonClick: (roomId: number) => void;
 };
 
-export class LobbySceneRenderer extends BaseSceneRenderer {
+export class LobbySceneRenderer extends SceneRenderer {
   protected scene: LobbyScene;
 
   protected cameraRenderer: LobbySceneCameraRenderer;

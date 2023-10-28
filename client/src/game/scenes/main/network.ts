@@ -1,11 +1,11 @@
 import { GameData, User, clientEmitEvent, clientOnEvent } from "shared";
-import BaseNetworkManager from "../base/network";
+import { NetworkManager } from "../../models";
 
-export default class MainSceneNetworkManager extends BaseNetworkManager {
+export default class MainSceneNetworkManager extends NetworkManager {
   private onGameData: () => void;
 
   gameData: GameData = {
-    fighterStatuses: [],
+    playerStatuses: [],
     bulletStatuses: [],
     obstacleStatuses: [],
   };
@@ -28,10 +28,10 @@ export default class MainSceneNetworkManager extends BaseNetworkManager {
     });
   }
 
-  sendCreateFighter() {
+  sendCreatePlayer() {
     if (!this.checkIsSocketOpen()) return;
     clientEmitEvent(this.socket, {
-      event: "fighter:create",
+      event: "player:create",
       newUserData: this.user,
     });
   }

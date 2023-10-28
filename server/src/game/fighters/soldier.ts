@@ -1,6 +1,6 @@
-import Fighter from "../base";
+import { Player } from "../model";
 
-export default class Soldier extends Fighter {
+export default class Soldier extends Player {
   isCoolingDown = false;
 
   coolDownStartTime = Date.now();
