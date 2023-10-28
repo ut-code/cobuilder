@@ -6,10 +6,10 @@ interface GameObject {
 }
 
 interface Item extends GameObject {
-  owner: Player;
+  owner: Fighter;
 }
 
-interface Player extends GameObject {
+interface Fighter extends GameObject {
   id: number;
   username: string;
 }
