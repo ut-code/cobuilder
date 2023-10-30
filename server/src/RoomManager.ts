@@ -1,5 +1,6 @@
 import { Worker, isMainThread } from "node:worker_threads";
 import { User } from "shared";
+import path from "path";
 
 export class Room {
   id: number;
@@ -81,7 +82,8 @@ export class RoomManager {
       this.removeUser(user.id);
     }
     if (isMainThread) {
-      this.gameWorkers.set(roomId, new Worker("./src/game/game.worker.ts"));
+      const worker = new Worker(path.resolve(__dirname, "./game/worker.ts"));
+      this.gameWorkers.set(roomId, worker);
     }
   }
 
@@ -89,6 +91,8 @@ export class RoomManager {
     const room = this.getRoom(roomId);
     if (!room) throw new Error();
     this.rooms.splice(this.rooms.indexOf(room), 1);
+    this.gameWorkers.get(roomId)?.terminate();
+    this.gameWorkers.delete(roomId);
   }
 
   getGameWorkerByUserId(userId: number) {
