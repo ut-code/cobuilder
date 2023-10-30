@@ -41,7 +41,6 @@ export default class Game {
   }
 
   createFighterFromUser(user: User) {
-    console.log("aaa");
     const fighter = new BaseFighter(user.id, this.findEmptySpace(), {
       x: 0,
       y: 0,
@@ -56,9 +55,7 @@ export default class Game {
 
   setUserInputs(fighterId: number, inputs: Record<string, boolean>) {
     const fighter = this.getFighter(fighterId);
-    console.log(this.fighters);
     if (!fighter) return;
-    console.log("after");
     this.userInputs.set(fighter, inputs);
   }
 

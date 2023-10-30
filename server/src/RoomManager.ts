@@ -38,7 +38,6 @@ export class RoomManager {
   addRoom(name: string, user: User) {
     const room = new Room(Math.random(), name, user);
     this.rooms.push(room);
-    console.log(this.rooms);
   }
 
   joinRoom(roomId: number, user: User) {

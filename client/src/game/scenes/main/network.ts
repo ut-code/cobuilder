@@ -33,7 +33,6 @@ export default class MainSceneNetworkManager extends BaseNetworkManager {
   }
 
   sendCreateFighter() {
-    console.log("sendCreateFighter");
     if (!this.checkIsSocketOpen()) return;
     clientEmitEvent(this.socket, {
       event: "fighter:create",

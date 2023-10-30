@@ -44,7 +44,6 @@ export default class NetworkManager {
           break;
         }
         case "fighter:create": {
-          console.log("fighter:create");
           this.onFighterCreate();
           break;
         }
