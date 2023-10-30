@@ -1,5 +1,5 @@
 import * as math from "mathjs";
-import { rotateVector3 } from "shared";
+import { rotateVector3, User } from "shared";
 import {
   GameObject,
   FIGHTER_DEPTH,
@@ -40,7 +40,13 @@ export default class Game {
     return this.fighters.find((fighter) => fighter.id === id);
   }
 
-  setFighter(fighter: BaseFighter) {
+  createFighterFromUser(user: User) {
+    console.log("aaa");
+    const fighter = new BaseFighter(user.id, this.findEmptySpace(), {
+      x: 0,
+      y: 0,
+      z: 0,
+    });
     this.fighters.push(fighter);
   }
 
@@ -50,7 +56,9 @@ export default class Game {
 
   setUserInputs(fighterId: number, inputs: Record<string, boolean>) {
     const fighter = this.getFighter(fighterId);
-    if (!fighter) throw new Error();
+    console.log(this.fighters);
+    if (!fighter) return;
+    console.log("after");
     this.userInputs.set(fighter, inputs);
   }
 

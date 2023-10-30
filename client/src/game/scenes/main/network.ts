@@ -10,10 +10,14 @@ export default class MainSceneNetworkManager extends BaseNetworkManager {
     obstacleStatuses: [],
   };
 
-  constructor(user: User, onGameData: () => void, onOpen: () => void) {
-    super(user);
+  constructor(
+    user: User,
+    onGameData: () => void,
+    previousNetworkManager?: BaseNetworkManager
+  ) {
+    super(user, previousNetworkManager);
     this.onGameData = onGameData;
-    clientOnEvent(this.socket, "open", onOpen);
+    clientEmitEvent(this.socket, { event: "fighter:create" });
     clientOnEvent(this.socket, "message", (data) => {
       switch (data.event) {
         case "game-data:update": {
@@ -29,10 +33,10 @@ export default class MainSceneNetworkManager extends BaseNetworkManager {
   }
 
   sendCreateFighter() {
+    console.log("sendCreateFighter");
     if (!this.checkIsSocketOpen()) return;
     clientEmitEvent(this.socket, {
       event: "fighter:create",
-      newUserData: this.user,
     });
   }
 
@@ -41,7 +45,6 @@ export default class MainSceneNetworkManager extends BaseNetworkManager {
     const data = JSON.stringify(Object.fromEntries(inputs));
     clientEmitEvent(this.socket, {
       event: "keyboard-inputs:update",
-      typistData: this.user,
       keyboardInputs: data,
     });
   }

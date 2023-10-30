@@ -13,10 +13,8 @@ export const connection = "connection";
 export type UserConnecting = User;
 
 export const createFighter = "fighter:create";
-export type NewUserData = User;
 
 export const updateKeyboardInputs = "keyboard-inputs:update";
-export type TypistData = User;
 export type KeyboardInputs = string;
 
 export const createRoom = "room:create";
@@ -32,11 +30,9 @@ export type ConnectionEventData = {
 };
 export type CreateUserEventData = {
   event: typeof createFighter;
-  newUserData: NewUserData;
 };
 export type KeyboardInputsEventData = {
   event: typeof updateKeyboardInputs;
-  typistData: TypistData;
   keyboardInputs: KeyboardInputs;
 };
 export type CreateRoomEventData = {

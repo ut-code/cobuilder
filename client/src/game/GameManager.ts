@@ -20,7 +20,7 @@ export default class GameManager {
 
   private inputManager!: InputManager;
 
-  private networkManager!: BaseNetworkManager;
+  private networkManager?: BaseNetworkManager;
 
   constructor(canvas: HTMLCanvasElement) {
     this.user.id = Math.random();
@@ -42,9 +42,7 @@ export default class GameManager {
           () => {
             newMainScene.updateScene(newNetworkManager.gameData);
           },
-          () => {
-            newNetworkManager.sendCreateFighter();
-          }
+          this.networkManager
         );
         this.networkManager = newNetworkManager;
         this.inputManager = new InputManager(this.canvas, () => {
@@ -82,7 +80,8 @@ export default class GameManager {
           },
           () => {
             this.switchScene("main");
-          }
+          },
+          this.networkManager
         );
         this.networkManager = newNetworkManager;
         this.sceneRenderer = new LobbySceneRenderer(
@@ -91,6 +90,7 @@ export default class GameManager {
           {
             onAddButtonClick: () => {
               newNetworkManager.sendCreateRoom();
+              this.user.status = "waiting";
             },
             onJoinButtonClick: (roomId: number) => {
               newNetworkManager.sendJoinRoom(roomId);
@@ -110,7 +110,6 @@ export default class GameManager {
   private switchScene(sceneType: SceneType) {
     this.sceneRenderer.destroy();
     this.inputManager.destroy();
-    this.networkManager.destroy();
     this.createScene(sceneType);
   }
 
@@ -128,6 +127,6 @@ export default class GameManager {
 
   destroy() {
     this.sceneRenderer.destroy();
-    this.networkManager.destroy();
+    this.networkManager?.destroy();
   }
 }
