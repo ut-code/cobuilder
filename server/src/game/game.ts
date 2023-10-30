@@ -56,7 +56,6 @@ export default class Game {
 
   createFighterActions() {
     for (const [actor, inputs] of this.userInputs) {
-      actor.setAction("idle");
       if (inputs.w) {
         this.addFighterAction(
           new MoveAction(
@@ -85,6 +84,9 @@ export default class Game {
       }
       if (inputs[" "]) {
         this.addFighterAction(new JumpAction(actor));
+      }
+      if (!inputs[" "] && !inputs.w && !inputs.s && !inputs.a && !inputs.d) {
+        actor.setAction("idle");
       }
     }
   }

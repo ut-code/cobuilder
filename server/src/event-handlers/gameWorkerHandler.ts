@@ -1,7 +1,7 @@
 import { serverEmitEvent, serverOnEvent } from "shared";
 import { WebSocket } from "ws";
 import { Worker } from "node:worker_threads";
-import { WorkerEvent } from "../game/game.worker";
+import { WorkerEvent } from "../game/model";
 
 export default function gameWorkerHandler(
   socket: WebSocket,
@@ -48,7 +48,7 @@ export default function gameWorkerHandler(
     }
   });
   serverOnEvent(socket, "close", () => {
-    console.log(`User ${userId} disconnected`);
+    gameWorker.terminate();
     onClose();
   });
 }

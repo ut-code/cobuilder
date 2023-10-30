@@ -19,7 +19,7 @@ export class MartialArtistRenderer extends BaseFighterRenderer {
       const clips = gltf.animations;
       const runningClip = THREE.AnimationClip.findByName(clips, "running");
       const runningAction = this.animationMixer.clipAction(runningClip);
-      runningAction.play();
+      this.actionAnimations.move = runningAction;
       const { x, y, z } = fighter.position;
       const { x: rotationX, y: rotationY, z: rotationZ } = fighter.rotation;
       model.position.set(x, y, z);
@@ -29,8 +29,19 @@ export class MartialArtistRenderer extends BaseFighterRenderer {
     });
   }
 
+  runAnimation(): void {
+    console.log("currentAction", this.fighter.currentAction);
+    console.log("previousAction", this.fighter.previousAction);
+    if (this.fighter.currentAction !== this.fighter.previousAction) {
+      const previousAction = this.actionAnimations[this.fighter.previousAction];
+      const currentAction = this.actionAnimations[this.fighter.currentAction];
+      previousAction?.stop();
+      currentAction?.play();
+    }
+  }
+
   render(): void {
     super.render();
-    this.animationMixer?.update(0.01);
+    this.runAnimation();
   }
 }

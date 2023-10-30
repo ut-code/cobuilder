@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev -r dotenv/config --inspect=8001 src/main.ts",
     "type-check": "tsc --noEmit",
-    "build": "cd src && tsc"
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",

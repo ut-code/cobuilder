@@ -1,18 +1,9 @@
-import {
-  CreateUserEventData,
-  KeyboardInputsEventData,
-  UpdateGameDataEventData,
-} from "shared";
 import { parentPort } from "node:worker_threads";
+import { WorkerEvent } from "./model";
 import Game from "./game";
 import BaseFighter from "./fighters/base";
 
 const game = new Game();
-
-export type WorkerEvent =
-  | UpdateGameDataEventData
-  | CreateUserEventData
-  | KeyboardInputsEventData;
 
 parentPort?.on("message", (value: WorkerEvent) => {
   switch (value.event) {
@@ -32,7 +23,7 @@ parentPort?.on("message", (value: WorkerEvent) => {
       break;
     }
     default: {
-      throw new Error();
+      parentPort?.postMessage({ event: "error" });
     }
   }
 });

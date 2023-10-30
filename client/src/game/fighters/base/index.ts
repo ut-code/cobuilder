@@ -15,6 +15,8 @@ export abstract class BaseFighter implements GameObject {
 
   currentAction: FighterActions = "idle";
 
+  previousAction: FighterActions = "idle";
+
   constructor(id: number, position: Vector3, rotation: Vector3) {
     this.id = id;
     this.position = position;
@@ -31,6 +33,10 @@ export abstract class BaseFighterRenderer implements Renderer {
 
   animationMixer?: THREE.AnimationMixer;
 
+  actionAnimations: {
+    [key in FighterActions]?: THREE.AnimationAction;
+  } = {};
+
   constructor(fighter: BaseFighter, threeScene: THREE.Scene) {
     this.fighter = fighter;
     this.threeScene = threeScene;
@@ -41,6 +47,7 @@ export abstract class BaseFighterRenderer implements Renderer {
     const { x: rotationX, y: rotationY, z: rotationZ } = this.fighter.rotation;
     this.fighterObject.position.set(x, y, z);
     this.fighterObject.rotation.set(rotationX, rotationY, rotationZ);
+    this.animationMixer?.update(0.01);
   }
 
   destroy() {

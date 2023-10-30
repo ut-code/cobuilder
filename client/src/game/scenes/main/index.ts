@@ -107,6 +107,7 @@ export class MainScene extends BaseScene {
         if (existingFighter.HP !== HP) {
           existingFighter.HP = HP;
         }
+        existingFighter.previousAction = existingFighter.currentAction;
         if (existingFighter.currentAction !== fighterStatus.currentAction) {
           existingFighter.currentAction = fighterStatus.currentAction;
         }

@@ -1,4 +1,9 @@
-import { Vector3 } from "shared";
+import {
+  CreateUserEventData,
+  KeyboardInputsEventData,
+  UpdateGameDataEventData,
+  Vector3,
+} from "shared";
 
 export const FIGHTER_WIDTH = 10;
 export const FIGHTER_DEPTH = 10;
@@ -12,3 +17,8 @@ export interface GameObject {
 
   rotation: Vector3;
 }
+
+export type WorkerEvent =
+  | UpdateGameDataEventData
+  | CreateUserEventData
+  | KeyboardInputsEventData;
