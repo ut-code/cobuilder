@@ -12,7 +12,7 @@ import { BaseCameraRenderer, BaseScene, BaseSceneRenderer } from "../base";
 import {
   MartialArtist,
   MartialArtistRenderer,
-} from "../../fighters/martialArtist";
+} from "../../fighters/martial-artist";
 import upSky from "../../../../resources/clouds1_up.png";
 import downSky from "../../../../resources/clouds1_down.png";
 import eastSky from "../../../../resources/clouds1_east.png";

@@ -15,8 +15,6 @@ export { clientEmitEvent, serverEmitEvent } from "./utils/emitEvent";
 export { clientOnEvent, serverOnEvent } from "./utils/onEvent";
 
 export {
-  NewUserData,
-  TypistData,
   GameData,
   LobbyData,
   ConnectionEventData,

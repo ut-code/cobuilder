@@ -1,6 +1,5 @@
-import { Worker, isMainThread } from "node:worker_threads";
-import { User } from "shared";
-import path from "path";
+import { GameData, User } from "shared";
+import Game from "./game/game";
 
 export class Room {
   id: number;
@@ -21,31 +20,15 @@ export class Room {
 }
 
 export class RoomManager {
-  usersInLobby: User[] = [];
-
   rooms: Room[] = [];
 
   // key: roomId, value: gameWorker
-  gameWorkers: Map<number, Worker> = new Map();
+  games: Map<number, Game> = new Map();
 
   onGameStart: (users: User[]) => void;
 
   constructor(onGameStart: (users: User[]) => void) {
     this.onGameStart = onGameStart;
-  }
-
-  getUser(userId: number) {
-    return this.usersInLobby.find((one) => one.id === userId);
-  }
-
-  addUser(user: User) {
-    this.usersInLobby.push(user);
-  }
-
-  removeUser(userId: number) {
-    const user = this.getUser(userId);
-    if (!user) throw new Error();
-    this.usersInLobby.splice(this.usersInLobby.indexOf(user), 1);
   }
 
   getRoom(roomId: number) {
@@ -63,8 +46,11 @@ export class RoomManager {
     if (room.isPlaying) return;
     room.users.push(user);
     if (room.users.length === room.limit) {
-      this.createGameWorker(roomId);
+      this.createGame(roomId);
       room.isPlaying = true;
+      for (const userInRoom of room.users) {
+        userInRoom.status = "game";
+      }
       this.onGameStart(room.users);
     }
   }
@@ -75,31 +61,67 @@ export class RoomManager {
     this.rooms.splice(this.rooms.indexOf(room), 1);
   }
 
-  createGameWorker(roomId: number) {
+  createGame(roomId: number) {
     const room = this.getRoom(roomId);
     if (!room) throw new Error();
-    for (const user of room.users) {
-      this.removeUser(user.id);
-    }
-    if (isMainThread) {
-      const worker = new Worker(path.resolve(__dirname, "./game/worker.ts"));
-      this.gameWorkers.set(roomId, worker);
-    }
+    const game = new Game();
+    this.games.set(roomId, game);
   }
 
   deleteRoom(roomId: number) {
     const room = this.getRoom(roomId);
     if (!room) throw new Error();
     this.rooms.splice(this.rooms.indexOf(room), 1);
-    this.gameWorkers.get(roomId)?.terminate();
-    this.gameWorkers.delete(roomId);
+    this.games.delete(roomId);
   }
 
-  getGameWorkerByUserId(userId: number) {
-    const room = this.rooms.find((one) =>
-      one.users.some((user) => user.id === userId)
-    );
-    if (!room) throw new Error();
-    return this.gameWorkers.get(room.id);
+  addFighter(user: User) {
+    const roomId = this.rooms.find((room) => room.users.includes(user))?.id;
+    if (!roomId) throw new Error();
+    const game = this.games.get(roomId);
+    if (!game) throw new Error();
+    game.createFighterFromUser(user);
+  }
+
+  updateKeyboardInputs(user: User, keyboardInputs: Record<string, boolean>) {
+    const roomId = this.rooms.find((room) => room.users.includes(user))?.id;
+    if (!roomId) throw new Error();
+    const game = this.games.get(roomId);
+    if (!game) throw new Error();
+    game.setUserInputs(user.id, keyboardInputs);
+  }
+
+  getGameData(user: User): GameData {
+    const roomId = this.rooms.find((room) => room.users.includes(user))?.id;
+    if (!roomId) throw new Error();
+    const game = this.games.get(roomId);
+    if (!game) throw new Error();
+    return {
+      fighterStatuses: game.fighters.map((fighter) => {
+        return {
+          id: fighter.id,
+          position: fighter.position,
+          rotation: fighter.rotation,
+          HP: fighter.HP,
+          isDead: fighter.isDead,
+          currentAction: fighter.currentAction,
+          score: fighter.score,
+        };
+      }),
+      bulletStatuses: game.bullets.map((bullet) => {
+        return {
+          id: bullet.id,
+          position: bullet.position,
+          rotation: bullet.rotation,
+        };
+      }),
+      obstacleStatuses: game.obstacles.map((obstacle) => {
+        return {
+          id: obstacle.id,
+          position: obstacle.position,
+          rotation: obstacle.rotation,
+        };
+      }),
+    };
   }
 }

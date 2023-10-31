@@ -8,8 +8,13 @@ export default class LobbySceneNetworkManager extends BaseNetworkManager {
 
   lobbyData: LobbyData = { rooms: [] };
 
-  constructor(user: User, onLobbyData: () => void, onGameStart: () => void) {
-    super(user);
+  constructor(
+    user: User,
+    onLobbyData: () => void,
+    onGameStart: () => void,
+    previousNetworkManager?: BaseNetworkManager
+  ) {
+    super(user, previousNetworkManager);
     this.onLobbyData = onLobbyData;
     this.onGameStart = onGameStart;
     clientOnEvent(this.socket, "message", (data) => {
